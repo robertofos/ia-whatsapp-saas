@@ -1,8 +1,11 @@
 from apps.channels.models import TenantChannelAccount
 from apps.conversations.models import Customer, CustomerChannelIdentity, Conversation
 from apps.messaging.models import Message
+from apps.knowledge.models import Store, Product, FAQItem
 from .ai_service import generate_ai_response
 import logging
+from django.db.models import Q
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -76,11 +79,46 @@ def process_inbound_whatsapp_message(
             "role": role,
             "content": msg.content,
         })
+    # carregando o contexto de conhecimento para a IA
+    store = Store.objects.filter(tenant=tenant_account.tenant).first()
+    # products = Product.objects.filter(tenant=tenant_account.tenant, disponivel=True)[:10]
+    # faqs = FAQItem.objects.filter(tenant=tenant_account.tenant)[:10]
+    products = get_relevant_products(tenant_account.tenant, content, limit=5)
+    faqs = get_relevant_faqs(tenant_account.tenant, content, limit=5)
+
+    store_context = ""
+    if store:
+        store_context = f"""
+    Nome: {store.nome}
+    Descrição: {store.descricao}
+    Horário: {store.horario_funcionamento}
+    Endereço: {store.endereco}
+    Taxa de entrega: {store.taxa_entrega}
+    Formas de pagamento: {store.formas_pagamento}
+    """.strip()
+
+    products_context = "\n".join(
+        [
+            f"- {product.nome} | Categoria: {product.categoria} | Preço: R$ {product.preco} | Descrição: {product.descricao}"
+            for product in products
+        ]
+    )
+
+    faq_context = "\n".join(
+        [
+            f"- Pergunta: {faq.pergunta} | Resposta: {faq.resposta}"
+            for faq in faqs
+        ]
+    )
+
 
     # ai_response_text = generate_ai_response(content)
     try:
         ai_response_text = generate_ai_response(
         message_content=content,
+        store_context=store_context,
+        products_context=products_context,
+        faq_context=faq_context,
         tenant_name=tenant_account.tenant.name,history=history
         )
     except Exception as e:
@@ -111,4 +149,44 @@ def process_inbound_whatsapp_message(
 #     return f"Resposta automática: recebemos sua mensagem '{message_content}'"
 
 
+#carregas apenas informaçoes relevantes para o contexto da OpenAI
+def get_relevant_products(tenant, query, limit=5):
+    keywords = extract_keywords(query)
+    queryset = Product.objects.filter(tenant=tenant, disponivel=True)
 
+    if not keywords:
+        return queryset[:limit]
+
+    q_objects = Q()
+    for keyword in keywords:
+        q_objects |= Q(nome__icontains=keyword)
+        q_objects |= Q(descricao__icontains=keyword)
+        q_objects |= Q(categoria__icontains=keyword)
+
+    return queryset.filter(q_objects).distinct()[:limit]
+
+
+def get_relevant_faqs(tenant, query, limit=5):
+    keywords = extract_keywords(query)
+    queryset = FAQItem.objects.filter(tenant=tenant)
+
+    if not keywords:
+        return queryset[:limit]
+
+    q_objects = Q()
+    for keyword in keywords:
+        q_objects |= Q(pergunta__icontains=keyword)
+        q_objects |= Q(resposta__icontains=keyword)
+
+    return queryset.filter(q_objects).distinct()[:limit]
+
+
+
+def extract_keywords(text: str):
+    words = re.findall(r"\w+", text.lower())
+    stopwords = {
+        "a", "o", "e", "de", "do", "da", "das", "dos", "para", "com",
+        "tem", "têm", "vocês", "voces", "uma", "um", "as", "os",
+        "que", "qual", "quais", "quanto", "custa", "aceita", "aceitam"
+    }
+    return [word for word in words if len(word) > 2 and word not in stopwords]

@@ -31,5 +31,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     path("api/webhooks/whatsapp/mock/", whatsapp_webhook_mock),
+    path("api/", include("apps.knowledge.urls")),
 
 ]
