@@ -20,7 +20,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.tenants.views import TenantViewSet
 from apps.conversations.views import ConversationViewSet
-from apps.messaging.views import MessageViewSet
+from apps.messaging.views import MessageViewSet, whatsapp_webhook_mock
 
 router = DefaultRouter()
 router.register(r"tenants", TenantViewSet, basename="tenant")
@@ -30,4 +30,6 @@ router.register(r"messages", MessageViewSet, basename="message")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
+    path("api/webhooks/whatsapp/mock/", whatsapp_webhook_mock),
+
 ]
