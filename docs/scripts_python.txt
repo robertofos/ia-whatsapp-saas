@@ -1,0 +1,13 @@
+login e senha superUser Migrate django
+login: Master
+senha: canada@001
+
+
+cd C:\Users\Master\Documents\ia_whatsapp_saas\ia-whatsapp-saas\backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install django
+python -m django startproject config .
+pip install django djangorestframework psycopg[binary] celery redis
+pip install python-dotenv
+
