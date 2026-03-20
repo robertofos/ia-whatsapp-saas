@@ -15,6 +15,21 @@ Endereço de email: admin@gmail.com
 Password: 12345678
 
 
+
+----------------------
+servidor de produção
+
+https://cloud.digitalocean.com/login
+login pelo github que entra
+
+roo passaword:
+cAnada@00a
+
+
+IP de produção:
+
+138.197.139.199
+
 Sequência de comandos para deploy sem erro
 
 ------------
