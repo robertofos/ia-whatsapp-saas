@@ -58,6 +58,61 @@ def pending_messages_view(request):
 
     return Response(data)
 
+def approve_message_logic(message):
+    conversation = message.conversation
+    tenant_account = conversation.tenant_channel_account
+
+    if not tenant_account:
+        return False, "Conversation sem tenant_channel_account vinculado"
+
+    customer_identity = conversation.customer.identities.filter(
+        channel=conversation.channel
+    ).first()
+
+    if not customer_identity:
+        return False, "Identidade do cliente para este canal não encontrada"
+
+    destination = customer_identity.external_user_id
+    if not destination:
+        return False, "Destino do cliente não encontrado"
+
+    result = WhatsAppService.send_text(
+        to=destination,
+        body=message.content,
+        tenant_account=tenant_account,
+    )
+
+    if not result.get("success"):
+        message.delivery_status = Message.DeliveryStatus.FAILED
+        message.send_error = result.get("send_error", "")
+        message.save(update_fields=["delivery_status", "send_error", "updated_at"])
+        return False, result.get("send_error", "Erro ao enviar mensagem")
+
+    message.review_status = Message.ReviewStatus.APPROVED
+    message.delivery_status = result.get("delivery_status", Message.DeliveryStatus.SENT)
+    message.provider_message_id = result.get("provider_message_id", "")
+    message.provider_status = result.get("provider", "whatsapp")
+    message.sent_at = result.get("sent_at")
+    message.send_error = result.get("send_error", "")
+    message.save(update_fields=[
+        "review_status",
+        "delivery_status",
+        "provider_message_id",
+        "provider_status",
+        "sent_at",
+        "send_error",
+        "updated_at",
+    ])
+
+    return True, "Mensagem aprovada com sucesso"
+
+
+def reject_message_logic(message):
+    message.review_status = Message.ReviewStatus.REJECTED
+    message.save(update_fields=["review_status", "updated_at"])
+    return True, "Mensagem rejeitada com sucesso"
+
+
 @api_view(["POST"])
 def approve_message_view(request, message_id):
     try:
@@ -79,72 +134,12 @@ def approve_message_view(request, message_id):
             status=400,
         )
 
-    conversation = message.conversation
-    tenant_account = conversation.tenant_channel_account
+    success, detail = approve_message_logic(message)
 
-    if not tenant_account:
-        return Response(
-            {"detail": "Conversation sem tenant_channel_account vinculado"},
-            status=400,
-        )
+    if not success:
+        return Response({"detail": detail}, status=400)
 
-    customer_identity = conversation.customer.identities.filter(
-        channel=conversation.channel
-    ).first()
-
-    if not customer_identity:
-        return Response(
-            {"detail": "Identidade do cliente para este canal não encontrada"},
-            status=400,
-        )
-
-    destination = customer_identity.external_user_id
-
-    if not destination:
-        return Response(
-            {"detail": "Identidade do cliente sem external_user_id"},
-            status=400,
-        )
-
-    send_result = WhatsAppService.send_text(
-        to=destination,
-        body=message.content,
-        tenant_account=tenant_account,
-    )
-
-    message.review_status = Message.ReviewStatus.APPROVED
-    message.delivery_status = send_result.get(
-        "delivery_status",
-        Message.DeliveryStatus.FAILED,
-    )
-    message.provider_message_id = send_result.get("provider_message_id", "")
-    message.sent_at = send_result.get("sent_at")
-    message.send_error = send_result.get("send_error", "")
-
-    message.save()
-
-    if not send_result.get("success"):
-        return Response(
-            {
-                "detail": send_result.get("send_error", "Falha ao enviar mensagem no WhatsApp"),
-                "message_id": message.id,
-                "review_status": message.review_status,
-                "delivery_status": message.delivery_status,
-            },
-            status=502,
-        )
-
-    return Response(
-        {
-            "detail": "Mensagem aprovada e enviada com sucesso",
-            "message_id": message.id,
-            "status": message.review_status,
-            "delivery_status": message.delivery_status,
-            "provider_message_id": message.provider_message_id,
-            "sent_at": message.sent_at,
-            "send_result": send_result,
-        }
-    )
+    return Response({"detail": detail, "message_id": message.id, "status": "approved"})
 
 @api_view(["POST"])
 def reject_message_view(request, message_id):
@@ -159,14 +154,13 @@ def reject_message_view(request, message_id):
             status=400,
         )
 
-    message.review_status = Message.ReviewStatus.REJECTED
-    message.save()
+    success, detail = reject_message_logic(message)
 
-    return Response({
-        "detail": "Mensagem rejeitada",
-        "message_id": message.id,
-        "status": "rejected"
-    })
+    if not success:
+        return Response({"detail": detail}, status=400)
+
+    return Response({"detail": detail, "message_id": message.id, "status": "rejected"})
+    
 
 @api_view(["POST"])
 def edit_and_approve_message_view(request, message_id):
