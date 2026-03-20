@@ -122,7 +122,7 @@ def edit_and_approve_message_view(request, message_id):
         )
 
     message.content = new_content
-    message.review_status = Message.ReviewStatus.APPROVED
+    message.review_status = Message.ReviewStatus.EDITED
     message.save()
 
     return Response({
@@ -130,3 +130,214 @@ def edit_and_approve_message_view(request, message_id):
         "message_id": message.id,
         "content": message.content,
     })
+
+@api_view(["GET"])
+def edited_messages_view(request):
+    tenant_id = request.GET.get("tenant_id")
+
+    if not tenant_id:
+        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+
+    messages = Message.objects.filter(
+        conversation__tenant_id=tenant_id,
+        sender_type=Message.SenderType.AI,
+        direction=Message.Direction.OUTBOUND,
+        review_status=Message.ReviewStatus.EDITED,
+    ).order_by("-created_at")
+
+    data = [
+        {
+            "id": m.id,
+            "conversation_id": m.conversation_id,
+            "content": m.content,
+            "review_status": m.review_status,
+            "created_at": m.created_at,
+        }
+        for m in messages
+    ]
+
+    return Response(data)
+
+@api_view(["GET"])
+def rejected_messages_view(request):
+    tenant_id = request.GET.get("tenant_id")
+
+    if not tenant_id:
+        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+
+    messages = Message.objects.filter(
+        conversation__tenant_id=tenant_id,
+        sender_type=Message.SenderType.AI,
+        direction=Message.Direction.OUTBOUND,
+        review_status=Message.ReviewStatus.REJECTED,
+    ).order_by("-created_at")
+
+    data = [
+        {
+            "id": m.id,
+            "conversation_id": m.conversation_id,
+            "content": m.content,
+            "review_status": m.review_status,
+            "created_at": m.created_at,
+        }
+        for m in messages
+    ]
+
+    return Response(data)
+
+from django.core.paginator import Paginator, EmptyPage
+from django.db.models import Q
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from apps.messaging.models import Message
+
+
+@api_view(["GET"])
+def reviewed_messages_view(request):
+    tenant_id = request.GET.get("tenant_id")
+    status_filter = request.GET.get("status")
+    channel_filter = request.GET.get("channel")
+    conversation_id = request.GET.get("conversation_id")
+    search = request.GET.get("search")
+
+    page = request.GET.get("page", 1)
+    page_size = request.GET.get("page_size", 10)
+
+    if not tenant_id:
+        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+
+    valid_statuses = {
+        "pending": Message.ReviewStatus.PENDING,
+        "approved": Message.ReviewStatus.APPROVED,
+        "edited": Message.ReviewStatus.EDITED,
+        "rejected": Message.ReviewStatus.REJECTED,
+    }
+
+    valid_channels = {
+        "whatsapp": "whatsapp",
+        "instagram": "instagram",
+        "facebook": "facebook",
+        "google": "google",
+    }
+
+    try:
+        page = int(page)
+        page_size = int(page_size)
+    except ValueError:
+        return Response(
+            {"detail": "page e page_size devem ser numéricos"},
+            status=400,
+        )
+
+    if page < 1:
+        return Response({"detail": "page deve ser maior ou igual a 1"}, status=400)
+
+    if page_size < 1 or page_size > 100:
+        return Response(
+            {"detail": "page_size deve estar entre 1 e 100"},
+            status=400,
+        )
+
+    messages = Message.objects.filter(
+        conversation__tenant_id=tenant_id,
+        sender_type=Message.SenderType.AI,
+        direction=Message.Direction.OUTBOUND,
+    ).select_related("channel", "conversation")
+
+    if status_filter:
+        status_filter = status_filter.lower()
+
+        if status_filter not in valid_statuses:
+            return Response(
+                {
+                    "detail": "status inválido. Use: pending, approved, edited, rejected"
+                },
+                status=400,
+            )
+
+        messages = messages.filter(review_status=valid_statuses[status_filter])
+
+    if channel_filter:
+        channel_filter = channel_filter.lower()
+
+        if channel_filter not in valid_channels:
+            return Response(
+                {
+                    "detail": "channel inválido. Use: whatsapp, instagram, facebook, google"
+                },
+                status=400,
+            )
+
+        messages = messages.filter(channel__code=valid_channels[channel_filter])
+
+    if conversation_id:
+        try:
+            conversation_id = int(conversation_id)
+        except ValueError:
+            return Response(
+                {"detail": "conversation_id deve ser numérico"},
+                status=400,
+            )
+
+        messages = messages.filter(conversation_id=conversation_id)
+
+    if search:
+        messages = messages.filter(
+            Q(content__icontains=search)
+        )
+
+    messages = messages.order_by("-created_at", "-id")
+
+    paginator = Paginator(messages, page_size)
+
+    try:
+        page_obj = paginator.page(page)
+    except EmptyPage:
+        return Response(
+            {
+                "items": [],
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total_items": paginator.count,
+                    "total_pages": paginator.num_pages,
+                    "has_next": False,
+                    "has_previous": paginator.num_pages > 0,
+                },
+            }
+        )
+
+    data = [
+        {
+            "id": m.id,
+            "conversation_id": m.conversation_id,
+            "channel": m.channel.code if m.channel else None,
+            "channel_name": m.channel.name if m.channel else None,
+            "content": m.content,
+            "review_status": m.review_status,
+            "created_at": m.created_at,
+        }
+        for m in page_obj.object_list
+    ]
+
+    return Response(
+        {
+            "items": data,
+            "filters": {
+                "tenant_id": tenant_id,
+                "status": status_filter,
+                "channel": channel_filter,
+                "conversation_id": conversation_id,
+                "search": search,
+            },
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total_items": paginator.count,
+                "total_pages": paginator.num_pages,
+                "has_next": page_obj.has_next(),
+                "has_previous": page_obj.has_previous(),
+            },
+        }
+    )
