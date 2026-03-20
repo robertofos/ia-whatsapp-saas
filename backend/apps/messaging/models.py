@@ -19,6 +19,11 @@ class Message(models.Model):
         APPROVED = "approved", "Approved"
         EDITED = "edited", "Edited"
         REJECTED = "rejected", "Rejected"
+    
+    class DeliveryStatus(models.TextChoices):
+        NOT_SENT = "not_sent", "Not sent"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
 
     conversation = models.ForeignKey(
         Conversation,
@@ -56,6 +61,19 @@ class Message(models.Model):
         choices=ReviewStatus.choices,
         default=ReviewStatus.PENDING,
     )
+
+    # FIELDS TO SENT MESSAGE
+    delivery_status = models.CharField(
+        max_length=20,
+        choices=DeliveryStatus.choices,
+        default=DeliveryStatus.NOT_SENT,
+    )
+
+    provider_message_id = models.CharField(max_length=255, blank=True)
+
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    send_error = models.TextField(blank=True)
 
     raw_payload_json = models.JSONField(null=True, blank=True)
 
@@ -97,3 +115,6 @@ class AIResponseEvaluation(models.Model):
 
     def __str__(self):
         return f"Evaluation {self.id} - {self.evaluation_type}"
+    
+
+

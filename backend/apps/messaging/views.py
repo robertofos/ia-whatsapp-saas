@@ -112,20 +112,36 @@ def approve_message_view(request, message_id):
         tenant_account=tenant_account,
     )
 
+    message.review_status = Message.ReviewStatus.APPROVED
+    message.delivery_status = send_result.get(
+        "delivery_status",
+        Message.DeliveryStatus.FAILED,
+    )
+    message.provider_message_id = send_result.get("provider_message_id", "")
+    message.sent_at = send_result.get("sent_at")
+    message.send_error = send_result.get("send_error", "")
+
+    message.save()
+
     if not send_result.get("success"):
         return Response(
-            {"detail": send_result.get("detail", "Falha ao enviar mensagem no WhatsApp")},
+            {
+                "detail": send_result.get("send_error", "Falha ao enviar mensagem no WhatsApp"),
+                "message_id": message.id,
+                "review_status": message.review_status,
+                "delivery_status": message.delivery_status,
+            },
             status=502,
         )
-
-    message.review_status = Message.ReviewStatus.APPROVED
-    message.save()
 
     return Response(
         {
             "detail": "Mensagem aprovada e enviada com sucesso",
             "message_id": message.id,
             "status": message.review_status,
+            "delivery_status": message.delivery_status,
+            "provider_message_id": message.provider_message_id,
+            "sent_at": message.sent_at,
             "send_result": send_result,
         }
     )
@@ -213,14 +229,27 @@ def edit_and_approve_message_view(request, message_id):
         tenant_account=tenant_account,
     )
 
+    message.review_status = Message.ReviewStatus.EDITED
+    message.delivery_status = send_result.get(
+        "delivery_status",
+        Message.DeliveryStatus.FAILED,
+    )
+    message.provider_message_id = send_result.get("provider_message_id", "")
+    message.sent_at = send_result.get("sent_at")
+    message.send_error = send_result.get("send_error", "")
+
+    message.save()
+
     if not send_result.get("success"):
         return Response(
-            {"detail": send_result.get("detail", "Falha ao enviar mensagem no WhatsApp")},
+            {
+                "detail": send_result.get("send_error", "Falha ao enviar mensagem no WhatsApp"),
+                "message_id": message.id,
+                "review_status": message.review_status,
+                "delivery_status": message.delivery_status,
+            },
             status=502,
         )
-
-    message.review_status = Message.ReviewStatus.EDITED
-    message.save()
 
     return Response(
         {
@@ -228,6 +257,9 @@ def edit_and_approve_message_view(request, message_id):
             "message_id": message.id,
             "content": message.content,
             "status": message.review_status,
+            "delivery_status": message.delivery_status,
+            "provider_message_id": message.provider_message_id,
+            "sent_at": message.sent_at,
             "send_result": send_result,
         }
     )

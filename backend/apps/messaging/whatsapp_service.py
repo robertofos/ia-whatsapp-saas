@@ -1,5 +1,5 @@
-# apps/messaging/whatsapp_service.py
 import logging
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -10,13 +10,19 @@ class WhatsAppService:
         if not tenant_account:
             return {
                 "success": False,
-                "detail": "tenant_account não informado",
+                "delivery_status": "failed",
+                "provider_message_id": "",
+                "sent_at": None,
+                "send_error": "tenant_account não informado",
             }
 
         if tenant_account.channel.code != "whatsapp":
             return {
                 "success": False,
-                "detail": f"Canal inválido para WhatsAppService: {tenant_account.channel.code}",
+                "delivery_status": "failed",
+                "provider_message_id": "",
+                "sent_at": None,
+                "send_error": f"Canal inválido para WhatsAppService: {tenant_account.channel.code}",
             }
 
         logger.info(
@@ -32,9 +38,15 @@ class WhatsAppService:
             f"account={tenant_account.external_account_id} to={to} body={body}"
         )
 
+        fake_provider_message_id = f"mock-{timezone.now().timestamp()}"
+
         return {
             "success": True,
             "provider": "mock",
+            "provider_message_id": fake_provider_message_id,
+            "delivery_status": "sent",
+            "sent_at": timezone.now(),
+            "send_error": "",
             "to": to,
             "body": body,
             "external_account_id": tenant_account.external_account_id,
