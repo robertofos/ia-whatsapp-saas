@@ -20,7 +20,8 @@ from rest_framework.routers import DefaultRouter
 
 from apps.tenants.views import TenantViewSet
 from apps.conversations.views import ConversationViewSet
-from apps.messaging.views import MessageViewSet, whatsapp_webhook_mock
+from apps.messaging.views import MessageViewSet, whatsapp_webhook_mock, pending_messages_view
+from apps.messaging.views import  approve_message_view, reject_message_view, edit_and_approve_message_view
 
 router = DefaultRouter()
 router.register(r"tenants", TenantViewSet, basename="tenant")
@@ -29,8 +30,14 @@ router.register(r"messages", MessageViewSet, basename="message")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include(router.urls)),
+
     path("api/webhooks/whatsapp/mock/", whatsapp_webhook_mock),
+    path("api/messages/pending/", pending_messages_view),
+    path("api/messages/<int:message_id>/approve/", approve_message_view),
+    path("api/messages/<int:message_id>/reject/", reject_message_view),
+    path("api/messages/<int:message_id>/edit-approve/", edit_and_approve_message_view),
+    
+    path("api/", include(router.urls)),
     path("api/", include("apps.knowledge.urls")),
 
 ]
