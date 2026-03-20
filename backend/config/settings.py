@@ -11,6 +11,9 @@ SECRET_KEY = os.getenv(
     "django-insecure-change-me-in-production"
 )
 
+
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "")
+
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")

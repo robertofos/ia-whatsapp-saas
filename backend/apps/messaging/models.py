@@ -22,7 +22,10 @@ class Message(models.Model):
     
     class DeliveryStatus(models.TextChoices):
         NOT_SENT = "not_sent", "Not sent"
+        SENDING = "sending", "Sending"  
         SENT = "sent", "Sent"
+        DELIVERED = "delivered", "Delivered"
+        READ = "read", "Read"  
         FAILED = "failed", "Failed"
 
     conversation = models.ForeignKey(
@@ -34,6 +37,8 @@ class Message(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
 
     external_message_id = models.CharField(max_length=255, blank=True)
+
+    provider_status = models.CharField(max_length=50, blank=True)
 
     sender_type = models.CharField(
         max_length=20,
@@ -69,6 +74,12 @@ class Message(models.Model):
         default=DeliveryStatus.NOT_SENT,
     )
 
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
+    read_at = models.DateTimeField(null=True, blank=True) 
+
+    failed_at = models.DateTimeField(null=True, blank=True)
+
     provider_message_id = models.CharField(max_length=255, blank=True)
 
     sent_at = models.DateTimeField(null=True, blank=True)
@@ -80,6 +91,8 @@ class Message(models.Model):
     timestamp = models.DateTimeField(default=timezone.now)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Message {self.id} - {self.sender_type}"
