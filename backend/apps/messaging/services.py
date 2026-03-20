@@ -128,11 +128,19 @@ def process_inbound_whatsapp_message(
         ai_response_text = f"Recebemos sua mensagem e vamos encaminhar para atendimento. [erro: {str(e)}]"
 
 
-    result = AIReplyService.handle_ai_response(
-        conversation=conversation,
-        channel=tenant_account.channel,
-        ai_text=ai_response_text,
-    )
+    try:
+        result = AIReplyService.handle_ai_response(
+            conversation=conversation,
+            channel=tenant_account.channel,
+            ai_text=ai_response_text,
+        )
+    except Exception as e:
+        logger.exception("Erro ao processar resposta da IA / envio automático")
+        result = {
+            "status": "error",
+            "message_id": None,
+            "detail": str(e),
+        }
 
     # ai_message = Message.objects.create(
     #     conversation=conversation,
@@ -152,10 +160,11 @@ def process_inbound_whatsapp_message(
     "tenant_id": tenant_account.tenant.id,
     "conversation_id": conversation.id,
     "message_id": message.id,
-    "ai_message_id": result["message_id"],
-    "ai_status": result["status"],
+    "ai_message_id": result.get("message_id"),
+    "ai_status": result.get("status"),
+    "ai_detail": result.get("detail"),
     "customer_id": customer.id,
-}
+    }
 
 # def generate_ai_response(message_content: str) -> str:
 #     return f"Resposta automática: recebemos sua mensagem '{message_content}'"

@@ -6,6 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from .models import Message
 from .serializers import MessageSerializer
 from .services import process_inbound_whatsapp_message
+from apps.messaging.whatsapp_service import WhatsAppService
 
 class MessageViewSet(ModelViewSet):
     queryset = Message.objects.all().order_by("id")
@@ -60,7 +61,15 @@ def pending_messages_view(request):
 @api_view(["POST"])
 def approve_message_view(request, message_id):
     try:
-        message = Message.objects.get(id=message_id)
+        message = Message.objects.select_related(
+            "conversation",
+            "conversation__tenant",
+            "conversation__channel",
+            "conversation__tenant_channel_account",
+            "conversation__tenant_channel_account__channel",
+            "conversation__customer",
+            "channel",
+        ).get(id=message_id)
     except Message.DoesNotExist:
         return Response({"detail": "Mensagem não encontrada"}, status=404)
 
@@ -70,16 +79,56 @@ def approve_message_view(request, message_id):
             status=400,
         )
 
+    conversation = message.conversation
+    tenant_account = conversation.tenant_channel_account
+
+    if not tenant_account:
+        return Response(
+            {"detail": "Conversation sem tenant_channel_account vinculado"},
+            status=400,
+        )
+
+    customer_identity = conversation.customer.identities.filter(
+        channel=conversation.channel
+    ).first()
+
+    if not customer_identity:
+        return Response(
+            {"detail": "Identidade do cliente para este canal não encontrada"},
+            status=400,
+        )
+
+    destination = customer_identity.external_user_id
+
+    if not destination:
+        return Response(
+            {"detail": "Identidade do cliente sem external_user_id"},
+            status=400,
+        )
+
+    send_result = WhatsAppService.send_text(
+        to=destination,
+        body=message.content,
+        tenant_account=tenant_account,
+    )
+
+    if not send_result.get("success"):
+        return Response(
+            {"detail": send_result.get("detail", "Falha ao enviar mensagem no WhatsApp")},
+            status=502,
+        )
+
     message.review_status = Message.ReviewStatus.APPROVED
     message.save()
 
-    # 🔥 aqui futuramente envia pro WhatsApp real
-
-    return Response({
-        "detail": "Mensagem aprovada com sucesso",
-        "message_id": message.id,
-        "status": "approved"
-    })
+    return Response(
+        {
+            "detail": "Mensagem aprovada e enviada com sucesso",
+            "message_id": message.id,
+            "status": message.review_status,
+            "send_result": send_result,
+        }
+    )
 
 @api_view(["POST"])
 def reject_message_view(request, message_id):
@@ -111,7 +160,15 @@ def edit_and_approve_message_view(request, message_id):
         return Response({"detail": "content é obrigatório"}, status=400)
 
     try:
-        message = Message.objects.get(id=message_id)
+        message = Message.objects.select_related(
+            "conversation",
+            "conversation__tenant",
+            "conversation__channel",
+            "conversation__tenant_channel_account",
+            "conversation__tenant_channel_account__channel",
+            "conversation__customer",
+            "channel",
+        ).get(id=message_id)
     except Message.DoesNotExist:
         return Response({"detail": "Mensagem não encontrada"}, status=404)
 
@@ -121,15 +178,59 @@ def edit_and_approve_message_view(request, message_id):
             status=400,
         )
 
+    conversation = message.conversation
+    tenant_account = conversation.tenant_channel_account
+
+    if not tenant_account:
+        return Response(
+            {"detail": "Conversation sem tenant_channel_account vinculado"},
+            status=400,
+        )
+
+    customer_identity = conversation.customer.identities.filter(
+        channel=conversation.channel
+    ).first()
+
+    if not customer_identity:
+        return Response(
+            {"detail": "Identidade do cliente para este canal não encontrada"},
+            status=400,
+        )
+
+    destination = customer_identity.external_user_id
+
+    if not destination:
+        return Response(
+            {"detail": "Identidade do cliente sem external_user_id"},
+            status=400,
+        )
+
     message.content = new_content
+
+    send_result = WhatsAppService.send_text(
+        to=destination,
+        body=message.content,
+        tenant_account=tenant_account,
+    )
+
+    if not send_result.get("success"):
+        return Response(
+            {"detail": send_result.get("detail", "Falha ao enviar mensagem no WhatsApp")},
+            status=502,
+        )
+
     message.review_status = Message.ReviewStatus.EDITED
     message.save()
 
-    return Response({
-        "detail": "Mensagem editada e aprovada",
-        "message_id": message.id,
-        "content": message.content,
-    })
+    return Response(
+        {
+            "detail": "Mensagem editada, aprovada e enviada com sucesso",
+            "message_id": message.id,
+            "content": message.content,
+            "status": message.review_status,
+            "send_result": send_result,
+        }
+    )
 
 @api_view(["GET"])
 def edited_messages_view(request):
@@ -341,3 +442,4 @@ def reviewed_messages_view(request):
             },
         }
     )
+
