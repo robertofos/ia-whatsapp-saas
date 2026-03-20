@@ -11,3 +11,7 @@ python -m django startproject config .
 pip install django djangorestframework psycopg[binary] celery redis
 pip install python-dotenv
 
+
+pip install pandas openpyxl
+
+

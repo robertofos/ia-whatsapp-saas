@@ -1,0 +1,72 @@
+SUBIR LOCAL o DOCKER
+docker compose --env-file .env.prod down
+docker compose --env-file .env.prod up -d --build
+docker compose --env-file .env.prod ps
+
+-- criar o banco
+docker compose --env-file .env.prod exec web python manage.py migrate
+docker compose --env-file .env.prod exec web python manage.py collectstatic --noinput
+docker compose --env-file .env.prod exec web python manage.py check
+
+-- criar o superusario
+docker compose --env-file .env.prod exec web python manage.py createsuperuser
+suário (leave blank to use 'root'): admin
+Endereço de email: admin@gmail.com
+Password: 12345678
+
+
+Sequência de comandos para deploy sem erro
+
+------------
+entrar no servidor
+ssh root@IP_DA_VPS
+-----------------
+instalar dependências
+apt update && apt upgrade -y
+apt install -y docker.io docker-compose-plugin git curl
+systemctl enable docker
+systemctl start docker
+--------------
+clonar projeto
+mkdir -p /opt/ia-whatsapp
+cd /opt/ia-whatsapp
+git clone SEU_REPOSITORIO .
+-------------
+criar arquivo de produção
+cp .env.prod.example .env.prod
+nano .env.prod
+-----------
+subir containers
+docker compose --env-file .env.prod up -d --build
+--------------
+ver status
+docker compose ps
+-----------
+ver logs se der problema
+docker compose logs -f web
+
+ou
+
+docker compose logs -f nginx
+--------------
+rodar migrações
+docker compose exec web python manage.py migrate
+--------------
+coletar static
+docker compose exec web python manage.py collectstatic --noinput
+--------------
+criar admin
+docker compose exec web python manage.py createsuperuser
+
+--------------------
+----------------------
+
+10. Como testar
+Abra no navegador:
+http://IP_DA_VPS/
+
+E também:
+http://IP_DA_VPS/admin/
+
+Se você criar healthcheck, melhor ainda:
+http://IP_DA_VPS/health/
