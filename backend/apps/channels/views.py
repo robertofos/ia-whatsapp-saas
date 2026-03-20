@@ -24,3 +24,4 @@ def whatsapp_webhook(request):
     WhatsAppWebhookService.handle(request.data)
 
     return Response({"ok": True}, status=status.HTTP_200_OK)
+

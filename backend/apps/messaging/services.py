@@ -67,7 +67,7 @@ def process_inbound_whatsapp_message(
         content=content,
         message_type="text",
         ai_generated=False,
-        review_status=Message.ReviewStatus.PENDING,
+        review_status=Message.ReviewStatus.APPROVED,
     )
     # carrega as ultimas mensagens 
     last_messages = Message.objects.filter(
@@ -211,3 +211,72 @@ def extract_keywords(text: str):
         "que", "qual", "quais", "quanto", "custa", "aceita", "aceitam"
     }
     return [word for word in words if len(word) > 2 and word not in stopwords]
+
+def detect_intent(text: str) -> str:
+    text = (text or "").lower()
+
+    product_words = [
+        "produto", "produtos", "cardápio", "cardapio", "menu", "item", "itens",
+        "pizza", "lanche", "bebida", "sobremesa", "prato", "pratos"
+    ]
+    hours_words = [
+        "horário", "horario", "funcionamento", "abre", "abrem", "fecha", "fecham"
+    ]
+    price_words = [
+        "preço", "preco", "valor", "valores", "quanto custa", "quanto é", "quanto eh"
+    ]
+    delivery_words = [
+        "entrega", "delivery", "entregam", "taxa de entrega", "frete"
+    ]
+    payment_words = [
+        "pagamento", "pagamentos", "pix", "cartão", "cartao", "dinheiro", "aceita"
+    ]
+    location_words = [
+        "endereço", "endereco", "localização", "localizacao", "onde fica", "local"
+    ]
+
+    if any(word in text for word in product_words):
+        return "products"
+
+    if any(word in text for word in hours_words):
+        return "hours"
+
+    if any(word in text for word in price_words):
+        return "pricing"
+
+    if any(word in text for word in delivery_words):
+        return "delivery"
+
+    if any(word in text for word in payment_words):
+        return "payment"
+
+    if any(word in text for word in location_words):
+        return "location"
+
+    return "general"
+
+def build_products_context(products) -> str:
+    if not products:
+        return "Nenhum produto relevante encontrado."
+
+    lines = ["PRODUTOS RELEVANTES ENCONTRADOS:"]
+    for product in products:
+        nome = getattr(product, "nome", "") or getattr(product, "name", "") or "Produto sem nome"
+        descricao = getattr(product, "descricao", "") or ""
+        categoria = getattr(product, "categoria", "") or ""
+        preco = getattr(product, "preco", None)
+
+        line = f"- {nome}"
+
+        if categoria:
+            line += f" | categoria: {categoria}"
+
+        if preco not in [None, ""]:
+            line += f" | preço: R$ {preco}"
+
+        if descricao:
+            line += f" | descrição: {descricao}"
+
+        lines.append(line)
+
+    return "\n".join(lines)
