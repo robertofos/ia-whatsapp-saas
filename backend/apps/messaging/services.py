@@ -6,6 +6,8 @@ from .ai_service import generate_ai_response
 import logging
 from django.db.models import Q
 import re
+from apps.messaging.ai_reply_service import AIReplyService
+
 
 logger = logging.getLogger(__name__)
 
@@ -126,24 +128,34 @@ def process_inbound_whatsapp_message(
         ai_response_text = f"Recebemos sua mensagem e vamos encaminhar para atendimento. [erro: {str(e)}]"
 
 
-    ai_message = Message.objects.create(
+    result = AIReplyService.handle_ai_response(
         conversation=conversation,
         channel=tenant_account.channel,
-        sender_type=Message.SenderType.AI,
-        direction=Message.Direction.OUTBOUND,
-        content=ai_response_text,
-        message_type="text",
-        ai_generated=True,
-        review_status=Message.ReviewStatus.PENDING,
+        ai_text=ai_response_text,
     )
 
+    # ai_message = Message.objects.create(
+    #     conversation=conversation,
+    #     channel=tenant_account.channel,
+    #     sender_type=Message.SenderType.AI,
+    #     direction=Message.Direction.OUTBOUND,
+    #     content=ai_response_text,
+    #     message_type="text",
+    #     ai_generated=True,
+    #     review_status=Message.ReviewStatus.PENDING,
+    # )
+
+
+
+
     return {
-        "tenant_id": tenant_account.tenant.id,
-        "conversation_id": conversation.id,
-        "message_id": message.id,
-        "ai_message_id": ai_message.id,
-        "customer_id": customer.id,
-    }
+    "tenant_id": tenant_account.tenant.id,
+    "conversation_id": conversation.id,
+    "message_id": message.id,
+    "ai_message_id": result["message_id"],
+    "ai_status": result["status"],
+    "customer_id": customer.id,
+}
 
 # def generate_ai_response(message_content: str) -> str:
 #     return f"Resposta automática: recebemos sua mensagem '{message_content}'"
