@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/messages/<int:message_id>/reject/", reject_message_view),
     path("api/messages/<int:message_id>/edit-approve/", edit_and_approve_message_view),
     
+    path("api/", include("apps.conversations.urls")),
     path("api/", include("apps.channels.urls")),
     path("api/", include(router.urls)),
     path("api/", include("apps.knowledge.urls")),
