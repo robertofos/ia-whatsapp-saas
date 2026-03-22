@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ValidationError
 
-from .models import Message
+from .models import Message,Conversation
 from .serializers import MessageSerializer
 from .services import process_inbound_whatsapp_message
 from apps.messaging.whatsapp_service import WhatsAppService
@@ -481,3 +481,90 @@ def conversation_messages_view(request, conversation_id):
 
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data)
+
+@api_view(["POST"])
+def send_manual_message_view(request, conversation_id):
+    content = request.data.get("content", "").strip()
+
+    if not content:
+        return Response(
+            {"detail": "content é obrigatório"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        conversation = Conversation.objects.select_related(
+            "tenant",
+            "channel",
+            "tenant_channel_account",
+            "customer",
+        ).get(id=conversation_id)
+    except Conversation.DoesNotExist:
+        return Response(
+            {"detail": "Conversa não encontrada"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    tenant_account = conversation.tenant_channel_account
+    if not tenant_account:
+        return Response(
+            {"detail": "Conversa sem tenant_channel_account vinculado"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    customer_identity = conversation.customer.identities.filter(
+        channel=conversation.channel
+    ).first()
+
+    if not customer_identity:
+        return Response(
+            {"detail": "Identidade do cliente não encontrada"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    destination = customer_identity.external_user_id
+
+    send_result = WhatsAppService.send_text(
+        to=destination,
+        body=content,
+        tenant_account=tenant_account,
+    )
+
+    message = Message.objects.create(
+        conversation=conversation,
+        channel=conversation.channel,
+        content=content,
+        sender_type=Message.SenderType.HUMAN,
+        direction=Message.Direction.OUTBOUND,
+        review_status=Message.ReviewStatus.APPROVED,
+        ai_generated=False,
+        delivery_status=send_result.get(
+            "delivery_status",
+            Message.DeliveryStatus.FAILED,
+        ),
+        provider_message_id=send_result.get("provider_message_id", ""),
+        sent_at=send_result.get("sent_at"),
+        send_error=send_result.get("send_error", ""),
+    )
+
+    if not send_result.get("success"):
+        return Response(
+            {
+                "detail": send_result.get("send_error", "Falha ao enviar mensagem"),
+                "message_id": message.id,
+                "delivery_status": message.delivery_status,
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    return Response(
+        {
+            "detail": "Mensagem manual enviada com sucesso",
+            "message_id": message.id,
+            "content": message.content,
+            "delivery_status": message.delivery_status,
+            "provider_message_id": message.provider_message_id,
+            "sent_at": message.sent_at,
+        },
+        status=status.HTTP_200_OK,
+    )

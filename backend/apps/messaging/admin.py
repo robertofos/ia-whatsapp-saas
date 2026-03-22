@@ -283,10 +283,10 @@ class MessageAdmin(admin.ModelAdmin):
         return mark_safe(" ".join(buttons))
     action_buttons.short_description = "Ações"
 
-    def changelist_view(self, request, extra_context=None):
-        if not request.GET:
-            return redirect("/admin/messaging/message/?review_status__exact=pending")
-        return super().changelist_view(request, extra_context)
+    # def changelist_view(self, request, extra_context=None):
+    #     if not request.GET:
+    #         return redirect("/admin/messaging/message/?review_status__exact=pending")
+    #     return super().changelist_view(request, extra_context)
 
 @admin.register(AIResponseEvaluation)
 class AIResponseEvaluationAdmin(admin.ModelAdmin):

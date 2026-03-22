@@ -23,13 +23,14 @@ WHATSAPP_API_VERSION = os.getenv("WHATSAPP_API_VERSION", "v22.0")
 #DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
-# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,*").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,compliance-loading-covered-donate.trycloudflare.com,*").split(",")
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
+ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = [
+#     host.strip()
+#     for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+#     if host.strip()
+# ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",

@@ -9,8 +9,31 @@ Renomeie para:
 cloudflared.exe
 .\cloudflared.exe --version
 
+1 - subir o backend
+python manage.py runserver 8000
+
 Executar para export URL
 PS C:\Users\Master\Documents\ia_whatsapp_saas> .\cloudflared.exe tunnel --url http://localhost:8000
+
+
+
+-------------------------
+
+
+https://developers.facebook.com/apps/
+
+App ia Atendimento CRM social
+Caso de uso\Whatapp\Configuracao
+Alterar o valor da URL de CallBack nova gerado pelo CLoudfare
+colocar o token
+
+Depois ir em configuracao de API
+gerar um novo token
+copiar para dentro da variável WHATSAPP_ACCESS_TOKEN no .env
+
+depois ir em enviar mensagens e selecionar o meu numero no campo até
+
+
 
 --------------
 

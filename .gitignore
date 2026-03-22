@@ -12,3 +12,4 @@ db.sqlite3
 .idea/
 staticfiles/
 media/
+frontend/node_modules/

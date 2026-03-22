@@ -1,3 +1,9 @@
+superusuario Django Local
+
+roberto
+Rf@090778
+
+
 Docker Local
 
 superusuário Djgando

@@ -1,4 +1,12 @@
 import { useRef, useEffect, useMemo, useState } from "react";
+import {
+  approveMessage,
+  rejectMessage,
+  editAndApproveMessage,
+  sendManualMessage,
+} from "../services/messageService";
+
+import api from "../services/api";
 
 const FILTERS = {
   ALL: "all",
@@ -170,6 +178,33 @@ const messagesContainerRef = useRef(null);
 const [conversationDetail, setConversationDetail] = useState(null);
 const [loadingConversationDetail, setLoadingConversationDetail] = useState(false);
 
+// state para controlar ações de aprovação, rejeição e edição de mensagens geradas pela IA
+const [loadingAction, setLoadingAction] = useState(null);
+const [isEditingAi, setIsEditingAi] = useState(false);
+const [aiDraft, setAiDraft] = useState("");
+
+// função para rejeitar a mensagem gerada pela IA e remover a sugestão da conversa
+const handleRejectAi = async () => {
+  if (!pendingAiMessage) return;
+
+  try {
+    setLoadingAction("reject");
+
+    await rejectMessage(pendingAiMessage.id);
+
+    setIsEditingAi(false);
+    setAiDraft("");
+    await refreshInboxData();
+    await refreshSelectedConversation();
+  } catch (error) {
+    console.error("Erro ao rejeitar mensagem:", error);
+    const detail = error?.response?.data?.detail || "Erro ao rejeitar mensagem";
+    alert(detail);
+  } finally {
+    setLoadingAction(null);
+  }
+};
+
 const formatDayLabel = (dateKey) => {
   const date = new Date(dateKey);
 
@@ -179,41 +214,104 @@ const formatDayLabel = (dateKey) => {
     year: "numeric",
   });
 };
+// função para carregar mensagens de uma conversa específica, usada tanto no carregamento inicial das mensagens quando a conversa é selecionada, quanto após ações de aprovação/rejeição/edição de mensagens geradas pela IA para atualizar o painel de mensagens com o conteúdo mais recente do backend.
+const loadConversationMessages = async (
+  conversationIdParam = selectedConversationId,
+  { silent = false } = {}
+) => {
+  if (!conversationIdParam) return;
 
+  try {
+    if (!silent) setLoadingMessages(true);
+
+    const response = await api.get(`/conversations/${conversationIdParam}/messages/`);
+    setMessages(response.data || []);
+  } catch (error) {
+    console.error("Erro ao carregar mensagens:", error);
+  } finally {
+    if (!silent) setLoadingMessages(false);
+  }
+};
+
+// useEffect(() => {
+//   if (!selectedConversationId) return;
+
+//   const interval = setInterval(() => {
+//     loadConversationMessages(selectedConversationId, { silent: true });
+//   }, 3000); // a cada 3 segundos
+
+//   return () => clearInterval(interval);
+// }, [selectedConversationId]);
+//  função para recarregar os detalhes da conversa selecionada, incluindo as mensagens e outras informações relevantes, garantindo que o operador veja a versão mais atualizada da conversa após interagir com as sugestões de IA.
+const refreshSelectedConversation = async () => {
+  if (!selectedConversationId) return;
+
+  await loadConversationMessages(selectedConversationId);
+
+  // só chama se esse endpoint existir no seu projeto
+  // await loadConversationDetail(selectedConversationId);
+   requestAnimationFrame(() => {
+    scrollMessagesToBottom();
+  });
+};
+
+useEffect(() => {
+  scrollMessagesToBottom();
+}, [messages]);
+
+const scrollMessagesToBottom = () => {
+  if (!messagesContainerRef.current) return;
+
+  messagesContainerRef.current.scrollTop =
+    messagesContainerRef.current.scrollHeight;
+};
+
+// useEffect(() => {
+//   const interval = setInterval(() => {
+//     loadConversations({ silent: true });
+//   }, 5000);
+
+//   return () => clearInterval(interval);
+// }, []);
+
+const refreshInboxData = async () => {
+  await loadConversations({ silent: true });
+  await refreshSelectedConversation();
+};
+
+const loadConversations = async ({ silent = false } = {}) => {
+  try {
+    if (!silent) setLoadingConversations(true);
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/conversations/?limit=20&offset=0",
+      {
+        headers: {
+          "X-Tenant-Id": "1",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Erro ao carregar conversas");
+    }
+
+    const data = await response.json();
+    const results = data.results || [];
+
+    setConversations(results);
+
+    if (results.length > 0 && !selectedConversationId) {
+      setSelectedConversationId(results[0].id);
+    }
+  } catch (error) {
+    console.error("Erro ao carregar conversas:", error);
+  } finally {
+    setLoadingConversations(false);
+  }
+};
 //Inicio panel conversation
 useEffect(() => {
-  const loadConversations = async () => {
-    try {
-      setLoadingConversations(true);
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/conversations/?limit=20&offset=0",
-        {
-          headers: {
-            "X-Tenant-Id": "1",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao carregar conversas");
-      }
-
-      const data = await response.json();
-      const results = data.results || [];
-
-      setConversations(results);
-
-      if (results.length > 0) {
-        setSelectedConversationId(results[0].id);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar conversas:", error);
-    } finally {
-      setLoadingConversations(false);
-    }
-  };
-
   loadConversations();
 }, []);
 
@@ -297,9 +395,6 @@ useEffect(() => {
   conversationsMock[0] ||
   null;
 
-  const [aiDraft, setAiDraft] = useState(
-    conversations.find((item) => item.id === 1)?.aiSuggestion || ""
-  );
 
   const filteredConversations = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -346,6 +441,7 @@ useEffect(() => {
     setAiDraft(pendingAiMessage.content || "");
   } else {
     setAiDraft("");
+    setIsEditingAi(false);
   }
 }, [pendingAiMessage]);
 
@@ -360,95 +456,66 @@ useEffect(() => {
     setManualMessage("");
   };
 
-  const handleApproveAndSend = () => {
-    const content = aiDraft.trim();
-    if (!content || !selectedConversation) return;
+  const handleSendManualMessage = async () => {
+  if (!selectedConversationId) return;
 
-    const now = getNowTime();
+  const content = manualMessage.trim();
+  if (!content) return;
 
-    setConversations((current) =>
-      current.map((conversation) => {
-        if (conversation.id !== selectedConversationId) return conversation;
+  try {
+    setLoadingAction("manual-send");
 
-        const hasAwaitingTag = conversation.statusTags.includes("Aguardando IA");
-
-        return {
-          ...conversation,
-          pendingAI: false,
-          aiSuggestion: "",
-          time: now,
-          lastService: `Hoje às ${now}`,
-          statusTags: hasAwaitingTag
-            ? conversation.statusTags.filter((tag) => tag !== "Aguardando IA")
-            : conversation.statusTags,
-          messages: [
-            ...conversation.messages,
-            {
-              id: Date.now(),
-              side: "right",
-              text: content,
-              time: `${now} • Enviada`,
-            },
-          ],
-        };
-      })
-    );
-
-    setAiDraft("");
-  };
-
-  const handleRejectSuggestion = () => {
-    if (!selectedConversation) return;
-
-    setConversations((current) =>
-      current.map((conversation) => {
-        if (conversation.id !== selectedConversationId) return conversation;
-
-        const hasAwaitingTag = conversation.statusTags.includes("Aguardando IA");
-
-        return {
-          ...conversation,
-          pendingAI: false,
-          aiSuggestion: "",
-          statusTags: hasAwaitingTag
-            ? conversation.statusTags.filter((tag) => tag !== "Aguardando IA")
-            : conversation.statusTags,
-        };
-      })
-    );
-
-    setAiDraft("");
-  };
-
-  const handleSendManualMessage = () => {
-    const content = manualMessage.trim();
-    if (!content || !selectedConversation) return;
-
-    const now = getNowTime();
-
-    setConversations((current) =>
-      current.map((conversation) => {
-        if (conversation.id !== selectedConversationId) return conversation;
-
-        return {
-          ...conversation,
-          time: now,
-          lastService: `Hoje às ${now}`,
-          messages: [
-            ...conversation.messages,
-            {
-              id: Date.now(),
-              side: "right",
-              text: content,
-              time: `${now} • Enviada`,
-            },
-          ],
-        };
-      })
-    );
+    await sendManualMessage(selectedConversationId, content);
 
     setManualMessage("");
-  };
+    await refreshInboxData();
+
+    requestAnimationFrame(() => {
+      scrollMessagesToBottom();
+    });
+  } catch (error) {
+    console.error("Erro ao enviar mensagem manual:", error);
+    const detail =
+      error?.response?.data?.detail || "Erro ao enviar mensagem manual";
+    alert(detail);
+  } finally {
+    setLoadingAction(null);
+  }
+};
+
+  const handleApproveOrEditAi = async () => {
+  if (!pendingAiMessage) return;
+
+  const originalContent = pendingAiMessage.content || "";
+  const editedContent = aiDraft.trim();
+
+  if (!editedContent) {
+    alert("Mensagem não pode ficar vazia.");
+    return;
+  }
+
+  try {
+    setLoadingAction("approve");
+
+    if (editedContent === originalContent.trim()) {
+      await approveMessage(pendingAiMessage.id);
+    } else {
+      await editAndApproveMessage(pendingAiMessage.id, editedContent);
+    }
+
+    setAiDraft("");
+    await refreshSelectedConversation();
+    await refreshInboxData();
+  } catch (error) {
+    console.error("Erro ao aprovar/enviar mensagem:", error);
+    const detail =
+      error?.response?.data?.detail || "Erro ao enviar mensagem";
+    alert(detail);
+  } finally {
+    setLoadingAction(null);
+  }
+};
+
 
   const getMessageSide = (message) => {
   if (message.direction === "outbound") return "right";
@@ -504,6 +571,7 @@ useEffect(() => {
     return groupMessagesByDate(chatMessages);
   }, [chatMessages]); 
 
+  
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
       <header className="flex h-16 items-center justify-between border-b bg-white px-6">
@@ -680,38 +748,48 @@ useEffect(() => {
                       </div>
 
                       {/* 💬 mensagens do dia */}
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${
-                            message.side === "right"
-                              ? "justify-end"
-                              : "justify-start"
-                          }`}
-                        >
+                      {messages.map((message) => {
+                        const isRejectedAiMessage =
+                          (message.raw?.sender_type === "ai" || message.raw?.ai_generated === true) &&
+                          message.raw?.review_status === "rejected";
+
+                        return (
                           <div
-                            className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${
-                              message.side === "right"
-                                ? "rounded-br-md bg-[#dcf8c6]"
-                                : "rounded-bl-md bg-white"
+                            key={message.id}
+                            className={`flex ${
+                              message.side === "right" ? "justify-end" : "justify-start"
                             }`}
                           >
-                            <p className="text-sm text-gray-800">
-                              {message.text}
-                            </p>
-
                             <div
-                              className={`mt-2 text-[11px] ${
-                                message.side === "right"
-                                  ? "text-gray-500 text-right"
-                                  : "text-gray-400"
+                              className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${
+                                isRejectedAiMessage
+                                  ? "rounded-br-md border border-red-200 bg-red-50 opacity-80"
+                                  : message.side === "right"
+                                  ? "rounded-br-md bg-[#dcf8c6]"
+                                  : "rounded-bl-md bg-white"
                               }`}
                             >
-                              {message.time}
+                              {isRejectedAiMessage && (
+                                <div className="mb-1 text-[11px] font-medium text-red-600">
+                                  Sugestão rejeitada • não enviada
+                                </div>
+                              )}
+
+                              <p className="text-sm text-gray-800">{message.text}</p>
+
+                              <div
+                                className={`mt-2 text-[11px] ${
+                                  message.side === "right"
+                                    ? "text-gray-500 text-right"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {message.time}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ))}
               </div>
@@ -739,19 +817,19 @@ useEffect(() => {
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <button
-                        onClick={handleApproveAndSend}
+                        onClick={handleApproveOrEditAi}
+                        disabled={!!loadingAction || !aiDraft.trim()}
                         className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-95"
                       >
-                        Aprovar e enviar
+                        {loadingAction === "approve" ? "Enviando..." : "Aprovar e enviar"}
                       </button>
-                      <button className="rounded-xl border px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white">
-                        Editar antes de enviar
-                      </button>
+
                       <button
-                        onClick={handleRejectSuggestion}
+                        onClick={handleRejectAi}
+                        disabled={!!loadingAction}
                         className="rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                       >
-                        Rejeitar
+                        {loadingAction === "reject" ? "Rejeitando..." : "Rejeitar"}
                       </button>
                     </div>
                   </div>
@@ -764,17 +842,20 @@ useEffect(() => {
                 )}
 
                 <div className="flex items-end gap-3">
-                  <textarea
-                    placeholder="Escreva uma mensagem manual..."
-                    className="min-h-[52px] flex-1 rounded-2xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-black/10"
+                  <input
+                    type="text"
                     value={manualMessage}
                     onChange={(e) => setManualMessage(e.target.value)}
+                    placeholder="Escreva uma mensagem manual..."
+                    className="flex-1 rounded-xl border px-4 py-3 outline-none"
                   />
+
                   <button
                     onClick={handleSendManualMessage}
-                    className="rounded-2xl bg-black px-5 py-3 text-sm font-medium text-white hover:opacity-95"
+                    disabled={loadingAction === "manual-send" || !manualMessage.trim()}
+                    className="rounded-xl bg-black px-5 py-3 text-white"
                   >
-                    Enviar
+                    {loadingAction === "manual-send" ? "Enviando..." : "Enviar"}
                   </button>
                 </div>
               </div>
