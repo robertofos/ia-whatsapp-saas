@@ -1,5 +1,5 @@
 login e senha superUser Migrate django
-login: Master
+login: master
 senha: canada@001
 
 

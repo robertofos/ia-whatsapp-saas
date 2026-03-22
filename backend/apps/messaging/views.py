@@ -2,11 +2,16 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.exceptions import ValidationError
 
 from .models import Message
 from .serializers import MessageSerializer
 from .services import process_inbound_whatsapp_message
 from apps.messaging.whatsapp_service import WhatsAppService
+
+from django.core.paginator import Paginator, EmptyPage
+from django.db.models import Q
+
 
 class MessageViewSet(ModelViewSet):
     queryset = Message.objects.all().order_by("id")
@@ -106,12 +111,10 @@ def approve_message_logic(message):
 
     return True, "Mensagem aprovada com sucesso"
 
-
 def reject_message_logic(message):
     message.review_status = Message.ReviewStatus.REJECTED
     message.save(update_fields=["review_status", "updated_at"])
     return True, "Mensagem rejeitada com sucesso"
-
 
 @api_view(["POST"])
 def approve_message_view(request, message_id):
@@ -160,7 +163,6 @@ def reject_message_view(request, message_id):
         return Response({"detail": detail}, status=400)
 
     return Response({"detail": detail, "message_id": message.id, "status": "rejected"})
-    
 
 @api_view(["POST"])
 def edit_and_approve_message_view(request, message_id):
@@ -312,14 +314,6 @@ def rejected_messages_view(request):
 
     return Response(data)
 
-from django.core.paginator import Paginator, EmptyPage
-from django.db.models import Q
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
-from apps.messaging.models import Message
-
-
 @api_view(["GET"])
 def reviewed_messages_view(request):
     tenant_id = request.GET.get("tenant_id")
@@ -469,3 +463,21 @@ def reviewed_messages_view(request):
         }
     )
 
+@api_view(["GET"])
+def conversation_messages_view(request, conversation_id):
+    tenant_id = request.headers.get("X-Tenant-Id")
+
+    if not tenant_id:
+        raise ValidationError({"detail": "X-Tenant-Id header is required."})
+
+    messages = (
+        Message.objects
+        .filter(
+            conversation_id=conversation_id,
+            conversation__tenant_id=tenant_id
+        )
+        .order_by("created_at")
+    )
+
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)

@@ -1,0 +1,49 @@
+. Ambiente 3 — Docker local
+Quando usar
+Usar esse ambiente para:
+validar o projeto mais próximo do ambiente real
+padronizar execução
+reduzir diferenças entre máquinas
+testar backend, frontend, banco e serviços juntos
+Subir com Docker Compose
+
+Na raiz do projeto:
+docker compose up --build
+
+Se quiser rodar em background:
+docker compose up -d --build
+
+Parar containers
+docker compose down
+
+Ver logs
+docker compose logs -f
+Ver logs de um serviço específico
+Exemplo backend:
+docker compose logs -f backend
+
+Exemplo frontend:
+docker compose logs -f frontend
+
+Executar migrações no container do backend
+docker compose exec backend python manage.py migrate
+
+Criar superusuário
+docker compose exec backend python manage.py createsuperuser
+
+Coletar arquivos estáticos
+docker compose exec backend python manage.py collectstatic --noinput
+
+Resumo rápido — Docker local
+
+Subir tudo
+docker compose up --build
+
+Ou em background
+docker compose up -d --build
+
+Backend (migração)
+docker compose exec backend python manage.py migrate
+
+Frontend / Backend logs
+docker compose logs -f

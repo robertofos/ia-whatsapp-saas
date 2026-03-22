@@ -16,3 +16,9 @@ PS C:\Users\Master\Documents\ia_whatsapp_saas> .\cloudflared.exe tunnel --url ht
 
 token de acesso temporario facebook
 EAAqo0rAFPyABQ1rnG1bDWuTkV51whtRma9cxiUOLIAhppeA5j4JDsU26TZAAbtRXPenzEqf676W5OuEu4HBVfILVDoFpcBpE71Xjg04zl7AvcKN9ZBJuXn63pfq3HV0VZAAySMyXVDjlAcS469QuovcZCPoIrZBaHD5ZCeUCXK0UZCZAsfyGzEbXX4zBh4WW74r1UxjPfklaZCnZAp4FjkZBq2x6UU6odnjwQ2O07xoSMcEONpSjoBdBxW8Sx9Sq987IplorwWAgT0ZAXmKcguLoee31LwZDZD
+
+s
+OpenAI
+https://platform.openai.com/settings/organization/billing/overview
+
+coloquei $USD 10, em 19/03

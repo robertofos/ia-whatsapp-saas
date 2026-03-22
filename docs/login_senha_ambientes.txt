@@ -1,0 +1,31 @@
+Docker Local
+
+superusuário Djgando
+usuário (leave blank to use 'root'): admin
+Endereço de email: admin@gmail.com
+Password: 12345678
+
+
+Producao
+
+https://cloud.digitalocean.com/droplets/559752093/graphs?i=47b3be&period=hour
+
+https://cloud.digitalocean.com/login
+login pelo github que entra
+
+Senha para entrar no servidor de produção
+sh root@138.197.139.199
+passaword: cAnada@00a
+
+IP de produção:
+138.197.139.199
+
+ubuntu-s-1vcpu-1gb-tor1-01
+in  robertofos / 1 GB Memory / 25 GB Disk / TOR1 - Ubuntu 22.04 (LTS) x64
+Pagando $6USD por mês
+
+
+Ambiente de PRD superUsurio djangorestframework
+usuário (leave blank to use 'root'): root
+Endereço de email: robertofos@gmail.com
+Password: Canada@001

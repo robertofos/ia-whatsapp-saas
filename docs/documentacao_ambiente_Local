@@ -1,0 +1,77 @@
+Documentação de Ambientes — IA WhatsApp SaaS
+Objetivo
+
+Organizar os ambientes do projeto IA WhatsApp SaaS, com os comandos de inicialização do backend e do frontend, além do fluxo de uso em:
+
+Local puro
+Local com IP externo via Cloudflare Tunnel
+Docker local
+Produção (DigitalOcean)
+
+1. Estrutura geral do projeto
+
+Considerando a estrutura semelhante a:
+
+ia-whatsapp-saas/
+├─ backend/
+├─ frontend/
+├─ docker-compose.yml
+└─ .env / .env.prod / outros arquivos de ambiente
+
+-----------------------
+
+Ambiente 1 — Local puro
+Quando usar
+
+Usar esse ambiente para:
+desenvolvimento do backend
+desenvolvimento do frontend
+testes rápidos locais
+ajustes de API e interface
+Backend local
+
+
+Resumo rápido — Local puro
+Backend
+
+cd backend
+python manage.py runserver
+
+Frontend
+cd frontend
+npm run dev
+
+
+Entrar na pasta do backend:
+cd backend
+
+Ativar o ambiente virtual:
+Windows PowerShell
+.venv\Scripts\activate
+
+Instalar dependências, se necessário:
+pip install -r requirements.txt
+
+Rodar migrações:
+python manage.py migrate
+
+Subir o backend:
+python manage.py runserver
+
+Backend local normalmente disponível em:
+http://127.0.0.1:8000
+
+Frontend local
+
+Entrar na pasta do frontend:
+cd frontend
+
+Instalar dependências:
+npm install
+
+Subir o frontend:
+npm run dev
+
+Frontend local normalmente disponível em algo como:
+http://localhost:5173
+

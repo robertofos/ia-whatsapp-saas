@@ -1,0 +1,54 @@
+3. Ambiente 2 — Local com IP externo usando Cloudflare Tunnel
+Quando usar
+
+Usar esse ambiente quando:
+precisar expor o backend local para webhooks externos
+integrar com WhatsApp Cloud API
+testar chamadas externas sem subir em produção
+Fluxo
+
+A aplicação continua rodando localmente, mas o Cloudflare Tunnel gera uma URL pública apontando para seu servidor local.
+
+Exemplo:
+
+backend local roda em http://127.0.0.1:8000
+Cloudflare Tunnel expõe algo como: https://seu-tunnel.trycloudflare.com
+
+Passo 1 — subir backend local
+cd backend
+python manage.py runserver 0.0.0.0:8000
+O 0.0.0.0 ajuda a expor corretamente para outras interfaces.
+
+Passo 2 — iniciar o tunnel
+Se estiver usando cloudflared:
+cloudflared tunnel --url http://127.0.0.1:8000
+ou, em alguns casos:
+cloudflared tunnel --url http://localhost:8000
+
+O comando vai retornar uma URL pública HTTPS.
+
+Passo 3 — usar a URL pública
+
+Essa URL pode ser usada para:
+webhook do WhatsApp
+testes externos
+callbacks vindos de terceiros
+Frontend nesse cenário
+
+O frontend continua local normalmente:
+
+cd frontend
+npm run dev
+Resumo rápido — Local + Cloudflare Tunnel
+
+Backend
+
+cd backend
+python manage.py runserver 0.0.0.0:8000
+
+Tunnel
+cloudflared tunnel --url http://127.0.0.1:8000
+
+Frontend
+cd frontend
+npm run dev

@@ -1,0 +1,91 @@
+5. Ambiente 4 — Produção na DigitalOcean
+Quando usar
+Ambiente final para disponibilizar o sistema publicamente.
+
+Visão geral do fluxo em produção
+
+Normalmente o fluxo fica assim:
+Criar/usar uma Droplet na DigitalOcean
+Instalar Docker e Docker Compose
+Clonar o repositório
+Configurar variáveis de ambiente de produção
+Subir containers
+Rodar migrações
+Coletar estáticos
+Criar superusuário
+Validar domínio / NGINX / acesso público
+Acesso ao servidor
+
+Exemplo de acesso SSH:
+ssh root@SEU_IP
+
+Clonar o projeto
+Exemplo usando branch develop:
+git clone -b develop SEU_REPOSITORIO.git
+
+Entrar na pasta do projeto:
+cd ia-whatsapp-saas
+Arquivo de ambiente de produção
+
+Vocês já comentaram o uso de arquivo como:
+.env.prod
+
+Se necessário renomear:
+mv env.prod .env.prod
+
+ou criar/editá-lo manualmente.
+Subir produção com Docker Compose
+Na raiz do projeto:
+docker compose up -d --build
+
+Rodar migrações
+docker compose exec backend python manage.py migrate
+
+Coletar estáticos
+docker compose exec backend python manage.py collectstatic --noinput
+
+Criar superusuário
+docker compose exec backend python manage.py createsuperuser
+
+Ver logs em produção
+docker compose logs -f
+
+Ou por serviço:
+docker compose logs -f backend
+docker compose logs -f nginx
+docker compose logs -f frontend
+
+Reiniciar serviços
+docker compose restart
+
+ou um serviço específico:
+docker compose restart backend
+
+Atualizar código em produção
+git pull origin develop
+
+Depois:
+
+docker compose up -d --build
+Resumo rápido — Produção DigitalOcean
+
+Entrar no servidor
+ssh root@SEU_IP
+
+Ir para o projeto
+cd ia-whatsapp-saas
+
+Atualizar código
+git pull origin develop
+
+Subir containers
+docker compose up -d --build
+
+Migrações
+docker compose exec backend python manage.py migrate
+
+Static
+docker compose exec backend python manage.py collectstatic --noinput
+
+Superuser
+docker compose exec backend python manage.py createsuperuser

@@ -3,6 +3,10 @@ docker compose --env-file .env.prod down
 docker compose --env-file .env.prod up -d --build
 docker compose --env-file .env.prod ps
 
+
+docker-compose down
+docker-compose --env-file .env.prod up -d --build
+
 -- criar o banco
 docker compose --env-file .env.prod exec web python manage.py migrate
 docker compose --env-file .env.prod exec web python manage.py collectstatic --noinput
@@ -10,7 +14,7 @@ docker compose --env-file .env.prod exec web python manage.py check
 
 -- criar o superusario
 docker compose --env-file .env.prod exec web python manage.py createsuperuser
-suário (leave blank to use 'root'): admin
+usuário (leave blank to use 'root'): admin
 Endereço de email: admin@gmail.com
 Password: 12345678
 
@@ -19,16 +23,29 @@ Password: 12345678
 ----------------------
 servidor de produção
 
+https://cloud.digitalocean.com/droplets/559752093/graphs?i=47b3be&period=hour
+
+
 https://cloud.digitalocean.com/login
 login pelo github que entra
 
-roo passaword:
-cAnada@00a
-
+Senha para entrar no servidor de produção
+sh root@138.197.139.199
+passaword: cAnada@00a
 
 IP de produção:
-
 138.197.139.199
+
+ubuntu-s-1vcpu-1gb-tor1-01
+in  robertofos / 1 GB Memory / 25 GB Disk / TOR1 - Ubuntu 22.04 (LTS) x64
+Pagando $6USD por mês
+
+
+Ambiente de PRD superUsurio djangorestframework
+usuário (leave blank to use 'root'): root
+Endereço de email: robertofos@gmail.com
+Password: Canada@001
+
 
 Sequência de comandos para deploy sem erro
 
