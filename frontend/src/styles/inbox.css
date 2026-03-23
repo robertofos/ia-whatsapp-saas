@@ -74,8 +74,8 @@
 /* SIDEBAR */
 /* SIDEBAR */
 .inbox-sidebar {
-  @apply h-full border-r border-gray-300 bg-white p-4;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.04);
+  @apply min-h-0 overflow-hidden border-r border-gray-300 bg-white p-4;
+  
 }
 .inbox-sidebar__title {
   @apply mb-4 text-sm font-semibold text-gray-700;

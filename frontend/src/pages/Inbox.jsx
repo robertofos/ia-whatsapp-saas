@@ -703,9 +703,6 @@ const selectedConversationMock =
                     </span>
                   )}
 
-                  <button className="btn-secondary">
-                    Encerrar atendimento
-                  </button>
                 </div>
               </div>
 
