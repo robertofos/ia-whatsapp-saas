@@ -1,4 +1,6 @@
 import { useRef, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {  approveMessage,  rejectMessage,  editAndApproveMessage,  sendManualMessage,} from "../services/messageService";
 import api from "../services/api";
 import "../styles/inbox.css";
@@ -550,6 +552,15 @@ const selectedConversationMock =
     return groupMessagesByDate(chatMessages);
   }, [chatMessages]); 
 
+const { authUser, tenant, signOut } = useAuth();
+const navigate = useNavigate();
+
+function handleLogout() {
+  signOut();
+  navigate("/login");
+}
+
+
   // renderização do componente Inbox, incluindo o cabeçalho, painel lateral de conversas com filtros e campo de busca, 
   // e painel principal de mensagens com detalhes da conversa selecionada, 
   // ações para mensagens geradas pela IA e campo para envio de mensagens manuais,
@@ -558,29 +569,39 @@ const selectedConversationMock =
       <header className="inbox-topbar">
         <div className="inbox-topbar-brand">
           <div className="inbox-topbar-logo">
-            T
+            {tenant?.name?.[0]?.toUpperCase() || "T"}
           </div>
 
           <div className="inbox-topbar-brand-text">
-            <h1 className="inbox-topbar-title">Tenant Demo</h1>
-            <p className="inbox-topbar-subtitle">WhatsApp Inbox • Plano Pro</p>
+            <h1 className="inbox-topbar-title">
+              {tenant?.name || "Tenant"}
+            </h1>
+            <p className="inbox-topbar-subtitle">
+              WhatsApp Inbox
+            </p>
           </div>
         </div>
 
         <div className="inbox-topbar-actions">
-          <button className="inbox-topbar-alert-btn">
-            🔔
-            <span className="inbox-topbar-alert-badge">3</span>
-          </button>
-
           <div className="inbox-topbar-user">
-            <div className="inbox-topbar-avatar">RS</div>
+            <div className="inbox-topbar-avatar">
+              {authUser?.initials || "US"}
+            </div>
 
             <div className="inbox-topbar-user-text">
-              <div className="inbox-topbar-user-name">Roberto</div>
-              <div className="inbox-topbar-user-role">Admin</div>
+              <div className="inbox-topbar-user-name">
+                {authUser?.name || "Usuário"}
+              </div>
+              <div className="inbox-topbar-user-role">
+                {authUser?.role || "Perfil"}
+              </div>
             </div>
           </div>
+
+          {/* 🔥 BOTÃO LOGOUT */}
+          <button onClick={handleLogout} className="inbox-topbar-logout">
+            Sair
+          </button>
         </div>
       </header>
       <main className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)_320px]">

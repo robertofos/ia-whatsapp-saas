@@ -30,6 +30,7 @@ router.register(r"messages", MessageViewSet, basename="message")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", include("apps.core.urls")),
 
     path("api/webhooks/whatsapp/mock/", whatsapp_webhook_mock),
     path("api/messages/pending/", pending_messages_view),
