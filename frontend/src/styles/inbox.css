@@ -1,0 +1,412 @@
+@reference "tailwindcss";
+
+.inbox-shell {
+  @apply min-h-screen bg-slate-100 text-gray-900;
+}
+
+
+/* TOP HEADER */
+.inbox-topbar {
+  @apply flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6;
+}
+
+.inbox-topbar-brand {
+  @apply flex items-center gap-4;
+}
+
+.inbox-topbar-logo {
+  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-bold text-white shadow-sm;
+}
+
+.inbox-topbar-brand-text {
+  @apply min-w-0;
+}
+
+.inbox-topbar-title {
+  @apply text-base font-semibold text-gray-900;
+}
+
+.inbox-topbar-subtitle {
+  @apply text-xs text-gray-500;
+}
+
+.inbox-topbar-actions {
+  @apply flex items-center gap-3;
+}
+
+.inbox-topbar-alert-btn {
+  @apply relative rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50;
+}
+
+.inbox-topbar-alert-badge {
+  @apply absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white;
+}
+
+.inbox-topbar-user {
+  @apply flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2;
+}
+
+.inbox-topbar-avatar {
+  @apply flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700;
+}
+
+.inbox-topbar-user-text {
+  @apply text-left;
+}
+
+.inbox-topbar-user-name {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.inbox-topbar-user-role {
+  @apply text-xs text-gray-500;
+}
+
+/* APP SHELL */
+.inbox-shell {
+  @apply h-screen bg-slate-100 text-gray-900;
+}
+
+.inbox-layout {
+  @apply flex h-[calc(100vh-64px)] overflow-hidden;
+}
+
+/* SIDEBAR */
+/* SIDEBAR */
+.inbox-sidebar {
+  @apply h-full border-r border-gray-300 bg-white p-4;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.04);
+}
+.inbox-sidebar__title {
+  @apply mb-4 text-sm font-semibold text-gray-700;
+}
+
+.inbox-search {
+  @apply mb-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none transition focus:border-gray-300 focus:bg-white focus:ring-2 focus:ring-gray-100;
+}
+
+/* FILTERS */
+.inbox-filters {
+  @apply mb-3 flex justify-center gap-2 overflow-x-auto pb-1;
+}
+
+.inbox-filter-btn {
+  @apply rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100;
+}
+
+.inbox-filter-btn--active {
+  @apply bg-gray-900 text-white border-gray-900;
+}
+
+/* LIST */
+.inbox-conversation-list {
+  @apply space-y-2 overflow-y-auto pr-1;
+}
+
+/* ITEM */
+.inbox-conversation-item {
+  @apply w-full rounded-2xl border border-gray-200 bg-white p-3 text-left transition hover:bg-gray-50;
+}
+
+.inbox-conversation-item--active {
+  @apply border-gray-900 bg-gray-50 shadow-sm;
+}
+
+/* CONTENT */
+.inbox-conversation-header {
+  @apply mb-1 flex items-start justify-between gap-3;
+}
+
+.inbox-conversation-name {
+  @apply truncate text-sm font-semibold text-gray-900;
+}
+
+.inbox-conversation-phone {
+  @apply truncate text-xs text-gray-500;
+}
+
+.inbox-conversation-time {
+  @apply shrink-0 text-xs text-gray-400;
+}
+
+.inbox-conversation-channel {
+  @apply mb-2 text-sm text-gray-600;
+}
+
+.inbox-conversation-footer {
+  @apply flex items-center justify-between gap-2;
+}
+
+/* TAGS */
+.tag {
+  @apply rounded-full px-2 py-1 text-[11px] font-medium;
+}
+
+.tag--ai {
+  @apply bg-amber-100 text-amber-700;
+}
+
+/* BADGE */
+.badge {
+  @apply flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold text-white;
+}
+
+.badge--unread {
+  @apply bg-gray-900;
+}
+
+/* STATES */
+.inbox-empty {
+  @apply rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-400;
+}
+/* CHAT PANEL */
+/* CHAT WRAPPER */
+.inbox-chat-wrapper {
+  @apply min-w-0 bg-slate-100 p-4;
+}
+
+.inbox-chat-container {
+  @apply flex h-full min-h-[500px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm;
+}
+
+/* HEADER */
+.inbox-chat-header {
+  @apply flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4;
+}
+
+.inbox-chat-title {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.inbox-chat-subtitle {
+  @apply text-xs text-gray-500;
+}
+
+/* TAG */
+.tag--ai-pending {
+  @apply rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700;
+}
+
+/* MESSAGES AREA */
+.inbox-messages {
+  @apply flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-[#efeae2];
+}
+
+.inbox-date-divider {
+  @apply my-3 flex justify-center;
+}
+
+.inbox-date-label {
+  @apply rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm;
+}
+
+/* MESSAGE */
+.message-row {
+  @apply flex;
+}
+
+.message-row--right {
+  @apply justify-end;
+}
+
+.message-row--left {
+  @apply justify-start;
+}
+
+.message-bubble {
+  @apply max-w-[70%] rounded-2xl px-4 py-3 shadow-sm text-sm;
+}
+
+.message-bubble--me {
+  @apply bg-[#dcf8c6] rounded-br-md;
+}
+
+.message-bubble--other {
+  @apply bg-white rounded-bl-md;
+}
+
+.message-bubble--rejected {
+  @apply bg-red-50 border border-red-200 opacity-80;
+}
+
+.message-time {
+  @apply mt-2 text-[11px] text-gray-400;
+}
+
+.message-time--me {
+  @apply text-right text-gray-500;
+}
+
+/* AI PANEL */
+.inbox-ai-panel {
+  @apply mb-3 rounded-2xl border border-amber-200 bg-amber-50 p-4;
+}
+
+.inbox-ai-title {
+  @apply text-sm font-semibold text-amber-900;
+}
+
+.inbox-ai-subtitle {
+  @apply text-xs text-amber-700;
+}
+
+.inbox-ai-textarea {
+  @apply min-h-[96px] w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-amber-200;
+}
+
+/* INPUT */
+.inbox-input-area {
+  @apply flex items-end gap-3;
+}
+
+.inbox-input {
+  @apply flex-1 rounded-xl border border-gray-200 px-4 py-3 outline-none;
+}
+
+.btn-primary {
+  @apply rounded-xl bg-gray-900 px-5 py-3 text-white hover:opacity-95;
+}
+
+.btn-danger {
+  @apply rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50;
+}
+
+.btn-secondary {
+  @apply rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50;
+}
+
+/* EMPTY */
+.inbox-empty {
+  @apply flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-sm text-gray-400;
+}
+
+/* RIGHT PANEL */
+.inbox-details {
+  @apply h-full border-l border-gray-200 bg-white p-4;
+}
+
+.inbox-details__header {
+  @apply mb-4 flex items-center justify-between;
+}
+
+.inbox-details__title {
+  @apply text-sm font-semibold text-gray-700;
+}
+
+.inbox-details__content {
+  @apply space-y-4 overflow-y-auto pr-1 lg:h-[calc(100vh-120px)];
+}
+
+.inbox-details__empty {
+  @apply flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-sm text-gray-400;
+}
+
+/* CARD */
+.details-card {
+  @apply rounded-2xl border border-gray-200 bg-white p-4;
+}
+
+.details-card--muted {
+  @apply bg-gray-50;
+}
+
+.details-card__title {
+  @apply mb-3 text-sm font-semibold text-gray-900;
+}
+
+/* CUSTOMER */
+.customer-summary {
+  @apply flex items-center gap-3;
+}
+
+.customer-summary__avatar {
+  @apply flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-sm font-semibold text-white;
+}
+
+.customer-summary__name {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.customer-summary__meta {
+  @apply text-xs text-gray-500;
+}
+
+.customer-fields {
+  @apply mt-4 space-y-3 text-sm;
+}
+
+.customer-field__label {
+  @apply text-xs font-medium uppercase tracking-wide text-gray-400;
+}
+
+.customer-field__value {
+  @apply mt-1 text-gray-700;
+}
+
+/* TAGS */
+.details-tags {
+  @apply flex flex-wrap gap-2;
+}
+
+.details-pill {
+  @apply rounded-full px-2.5 py-1 text-[11px] font-medium;
+}
+
+.details-pill--status {
+  @apply bg-gray-100 text-gray-700;
+}
+
+.details-pill--tag {
+  @apply border border-gray-200 text-gray-700;
+}
+
+/* TEXT */
+.details-text {
+  @apply text-sm leading-6 text-gray-600;
+}
+
+/* TEXTAREA */
+.details-textarea {
+  @apply min-h-[120px] w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-gray-100;
+}
+
+/* BUTTONS */
+.btn-secondary-sm {
+  @apply rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50;
+}
+
+.btn-ghost-block {
+  @apply rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50;
+}
+
+.details-actions {
+  @apply grid gap-2;
+}
+
+
+
+/* SCROLLBAR */
+.inbox-conversation-list::-webkit-scrollbar,
+.inbox-messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.inbox-conversation-list::-webkit-scrollbar-track,
+.inbox-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inbox-conversation-list::-webkit-scrollbar-thumb,
+.inbox-messages::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.inbox-conversation-list::-webkit-scrollbar-thumb:hover,
+.inbox-messages::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}

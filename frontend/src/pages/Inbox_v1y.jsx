@@ -1,7 +1,6 @@
 import { useRef, useEffect, useMemo, useState } from "react";
 import {  approveMessage,  rejectMessage,  editAndApproveMessage,  sendManualMessage,} from "../services/messageService";
 import api from "../services/api";
-import "../styles/inbox.css";
 
 const FILTERS = {
   ALL: "all",
@@ -554,228 +553,215 @@ const selectedConversationMock =
   // e painel principal de mensagens com detalhes da conversa selecionada, 
   // ações para mensagens geradas pela IA e campo para envio de mensagens manuais,
   return (
-    <div className="inbox-shell">
-      <header className="inbox-topbar">
-        <div className="inbox-topbar-brand">
-          <div className="inbox-topbar-logo">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
+      <header className="flex h-16 items-center justify-between border-b bg-white px-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-sm font-bold text-white">
             T
           </div>
-
-          <div className="inbox-topbar-brand-text">
-            <h1 className="inbox-topbar-title">Tenant Demo</h1>
-            <p className="inbox-topbar-subtitle">WhatsApp Inbox • Plano Pro</p>
+          <div>
+            <h1 className="text-base font-semibold">Tenant Demo</h1>
+            <p className="text-xs text-gray-500">WhatsApp Inbox • Plano Pro</p>
           </div>
         </div>
 
-        <div className="inbox-topbar-actions">
-          <button className="inbox-topbar-alert-btn">
+        <div className="flex items-center gap-3">
+          <button className="relative rounded-xl border px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
             🔔
-            <span className="inbox-topbar-alert-badge">3</span>
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              3
+            </span>
           </button>
 
-          <div className="inbox-topbar-user">
-            <div className="inbox-topbar-avatar">RS</div>
-
-            <div className="inbox-topbar-user-text">
-              <div className="inbox-topbar-user-name">Roberto</div>
-              <div className="inbox-topbar-user-role">Admin</div>
+          <div className="flex items-center gap-2 rounded-xl border px-3 py-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">
+              RS
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-medium">Roberto</div>
+              <div className="text-xs text-gray-500">Admin</div>
             </div>
           </div>
         </div>
       </header>
-      <main className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)_320px]">
-        <aside className="inbox-sidebar">
-          <div className="inbox-sidebar__title">Conversas</div>
+
+      <main className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_320px]">
+        <aside className="border-r bg-white p-4">
+          <div className="mb-4 text-sm font-semibold text-gray-700">Conversas</div>
 
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome ou telefone..."
-            className="inbox-search"
+            className="mb-4 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
           />
 
-          <div className="inbox-filters">
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setActiveFilter(FILTERS.ALL)}
-              className={`inbox-filter-btn ${
-                activeFilter === FILTERS.ALL && "inbox-filter-btn--active"
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                activeFilter === FILTERS.ALL ? "bg-black text-white" : "border text-gray-600"
               }`}
             >
               Todas
             </button>
-
             <button
               onClick={() => setActiveFilter(FILTERS.UNREAD)}
-              className={`inbox-filter-btn ${
-                activeFilter === FILTERS.UNREAD && "inbox-filter-btn--active"
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                activeFilter === FILTERS.UNREAD ? "bg-black text-white" : "border text-gray-600"
               }`}
             >
-              Não lidas {unreadCount > 0 && `(${unreadCount})`}
+              Não lidas {unreadCount > 0 ? `(${unreadCount})` : ""}
             </button>
-
             <button
               onClick={() => setActiveFilter(FILTERS.PENDING_AI)}
-              className={`inbox-filter-btn ${
-                activeFilter === FILTERS.PENDING_AI && "inbox-filter-btn--active"
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                activeFilter === FILTERS.PENDING_AI ? "bg-black text-white" : "border text-gray-600"
               }`}
             >
-              Pendentes IA {pendingAiCount > 0 && `(${pendingAiCount})`}
+              Pendentes IA {pendingAiCount > 0 ? `(${pendingAiCount})` : ""}
             </button>
           </div>
-
           <div
-            className="inbox-conversation-list"
-            style={{ height: "calc(100vh - 220px)" }}
-          >
-            {loadingConversations ? (
-              <div className="inbox-empty">Carregando conversas...</div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="inbox-empty">
-                Nenhuma conversa encontrada para este filtro.
-              </div>
-            ) : (
-              filteredConversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => handleSelectConversation(conversation.id)}
-                  className={`inbox-conversation-item ${
-                    selectedConversation?.id === conversation.id &&
-                    "inbox-conversation-item--active"
-                  }`}
-                >
-                  <div className="inbox-conversation-header">
-                    <div className="min-w-0">
-                      <div className="inbox-conversation-name">
-                        {conversation.name}
-                      </div>
-                      <div className="inbox-conversation-phone">
-                        {conversation.phone}
-                      </div>
-                    </div>
-
-                    <div className="inbox-conversation-time">
-                      {conversation.time}
-                    </div>
+          className="space-y-2 overflow-y-auto pr-1"
+          style={{ height: "calc(100vh - 220px)" }}
+        >
+          {loadingConversations ? (
+            <div className="rounded-2xl border border-dashed p-4 text-sm text-gray-400">
+              Carregando conversas...
+            </div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="rounded-2xl border border-dashed p-4 text-sm text-gray-400">
+              Nenhuma conversa encontrada para este filtro.
+            </div>
+          ) : (
+            filteredConversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => handleSelectConversation(conversation.id)}
+                className={`w-full rounded-2xl border p-3 text-left transition hover:bg-gray-50 ${
+                  selectedConversation?.id === conversation.id
+                    ? "border-black bg-gray-50 shadow-sm"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <div className="mb-1 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{conversation.name}</div>
+                    <div className="truncate text-xs text-gray-500">{conversation.phone}</div>
                   </div>
 
-                  <div className="inbox-conversation-channel">
-                    {conversation.channel}
-                  </div>
+                  <div className="shrink-0 text-xs text-gray-400">{conversation.time}</div>
+                </div>
 
-                  <div className="inbox-conversation-footer">
-                    <div className="flex items-center gap-2">
-                      {conversation.pendingAI && (
-                        <span className="tag tag--ai">Pendente IA</span>
-                      )}
-                    </div>
+                <div className="mb-2 text-sm text-gray-600">{conversation.channel}</div>
 
-                    {conversation.unread > 0 && (
-                      <span className="badge badge--unread">
-                        {conversation.unread}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {conversation.pendingAI && (
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-700">
+                        Pendente IA
                       </span>
                     )}
                   </div>
-                </button>
-              ))
-            )}
-          </div>
-        </aside>
-        <section className="inbox-chat-wrapper">
-          {selectedConversation ? (
-            <div className="inbox-chat-container">
 
-              {/* HEADER */}
-              <div className="inbox-chat-header">
+                  {conversation.unread > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1.5 text-[11px] font-semibold text-white">
+                      {conversation.unread}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))
+          )}
+        </div>    
+        </aside>
+
+        <section className="bg-[#efeae2] p-4">
+          {selectedConversation ? (
+            <div className="flex h-full min-h-[500px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b bg-white px-5 py-4">
                 <div>
-                  <div className="inbox-chat-title">
-                    {selectedConversation?.name}
-                  </div>
-                  <div className="inbox-chat-subtitle">
+                  <div className="text-sm font-semibold">{selectedConversation?.name}</div>
+                  <div className="text-xs text-gray-500">
                     {selectedConversation?.phone} • {selectedConversation?.channel}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   {selectedConversation?.pendingAI && (
-                    <span className="tag--ai-pending">
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700">
                       Aguardando aprovação IA
                     </span>
                   )}
-
-                  <button className="btn-secondary">
+                  <button className="rounded-lg border px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
                     Encerrar atendimento
                   </button>
                 </div>
               </div>
 
-              {/* MESSAGES */}
-              <div
-                ref={messagesContainerRef}
-                className="inbox-messages"
-                style={{ maxHeight: "calc(100vh - 220px)" }}
-              >
-
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto bg-[#efeae2] px-6 py-5 space-y-4"
+                  style={{ maxHeight: "calc(100vh - 220px)" }}>
+                <div className="flex justify-center">
+                </div>
                 {loadingMessages && (
                   <div className="flex justify-center">
-                    <span className="inbox-date-label">
+                    <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm">
                       Carregando mensagens...
                     </span>
                   </div>
                 )}
-
-                {!loadingMessages && chatMessages.length === 0 && (
-                  <div className="text-sm text-gray-400 text-center">
-                    Nenhuma mensagem encontrada.
+                 {!loadingMessages && chatMessages.length === 0 && (
+                  <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                    Nenhuma mensagem encontrada para esta conversa.
                   </div>
-                )}
-
+                )}  
                 {!loadingMessages &&
                   Object.entries(groupedMessages).map(([dateKey, messages]) => (
                     <div key={dateKey}>
-                      <div className="inbox-date-divider">
-                        <span className="inbox-date-label">
+                      {/* separador de data */}
+                      <div className="my-3 flex justify-center">
+                        <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm">
                           {formatDayLabel(dateKey)}
                         </span>
                       </div>
 
+                      {/* mensagens do dia */}
                       {messages.map((message) => {
-                        const isRejected =
-                          (message.raw?.sender_type === "ai" ||
-                            message.raw?.ai_generated === true) &&
+                        const isRejectedAiMessage =
+                          (message.raw?.sender_type === "ai" || message.raw?.ai_generated === true) &&
                           message.raw?.review_status === "rejected";
 
                         return (
                           <div
                             key={message.id}
-                            className={`message-row ${
-                              message.side === "right"
-                                ? "message-row--right"
-                                : "message-row--left"
+                            className={`flex ${
+                              message.side === "right" ? "justify-end" : "justify-start"
                             }`}
                           >
                             <div
-                              className={`message-bubble ${
-                                isRejected
-                                  ? "message-bubble--rejected"
+                              className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${
+                                isRejectedAiMessage
+                                  ? "rounded-br-md border border-red-200 bg-red-50 opacity-80"
                                   : message.side === "right"
-                                  ? "message-bubble--me"
-                                  : "message-bubble--other"
+                                  ? "rounded-br-md bg-[#dcf8c6]"
+                                  : "rounded-bl-md bg-white"
                               }`}
                             >
-                              {isRejected && (
-                                <div className="text-[11px] text-red-600 mb-1">
-                                  Sugestão rejeitada
+                              {isRejectedAiMessage && (
+                                <div className="mb-1 text-[11px] font-medium text-red-600">
+                                  Sugestão rejeitada • não enviada
                                 </div>
                               )}
 
-                              {message.text}
+                              <p className="text-sm text-gray-800">{message.text}</p>
 
                               <div
-                                className={`message-time ${
+                                className={`mt-2 text-[11px] ${
                                   message.side === "right"
-                                    ? "message-time--me"
-                                    : ""
+                                    ? "text-gray-500 text-right"
+                                    : "text-gray-400"
                                 }`}
                               >
                                 {message.time}
@@ -788,162 +774,200 @@ const selectedConversationMock =
                   ))}
               </div>
 
-              {/* INPUT + IA */}
-              <div className="border-t border-gray-200 bg-gray-50 p-4">
-
-                {hasPendingAiSuggestion && (
-                  <div className="inbox-ai-panel">
-                    <div className="mb-2 flex justify-between">
+              <div className="border-t bg-gray-50 p-4">
+                {hasPendingAiSuggestion  &&  (
+                  <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="mb-2 flex items-center justify-between gap-3">
                       <div>
-                        <div className="inbox-ai-title">Sugestão da IA</div>
-                        <div className="inbox-ai-subtitle">
-                          Revisar antes de enviar
+                        <div className="text-sm font-semibold text-amber-900">Sugestão da IA</div>
+                        <div className="text-xs text-amber-700">
+                          Resposta gerada aguardando revisão do operador
                         </div>
                       </div>
-                      <span className="tag--ai-pending">Review mode</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-700">
+                        Review mode
+                      </span>
                     </div>
 
                     <textarea
-                      className="inbox-ai-textarea"
+                      className="min-h-[96px] w-full rounded-xl border bg-white px-3 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-amber-200"
                       value={aiDraft}
                       onChange={(e) => setAiDraft(e.target.value)}
                     />
 
-                    <div className="mt-3 flex gap-2">
-                      <button className="btn-primary">
-                        Aprovar e enviar
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={handleApproveOrEditAi}
+                        disabled={!!loadingAction || !aiDraft.trim()}
+                        className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-95"
+                      >
+                        {loadingAction === "approve" ? "Enviando..." : "Aprovar e enviar"}
                       </button>
-                      <button className="btn-danger">
-                        Rejeitar
+
+                      <button
+                        onClick={handleRejectAi}
+                        disabled={!!loadingAction}
+                        className="rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                      >
+                        {loadingAction === "reject" ? "Rejeitando..." : "Rejeitar"}
                       </button>
                     </div>
                   </div>
                 )}
 
-                <div className="inbox-input-area">
+                {!selectedConversation?.pendingAI && !selectedConversation?.aiSuggestion && aiDraft === "" && (
+                  <div className="mb-3 rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-sm text-gray-400">
+                    Nenhuma sugestão da IA pendente nesta conversa.
+                  </div>
+                )}
+
+                <div className="flex items-end gap-3">
                   <input
                     type="text"
                     value={manualMessage}
                     onChange={(e) => setManualMessage(e.target.value)}
-                    placeholder="Escreva uma mensagem..."
-                    className="inbox-input"
+                    placeholder="Escreva uma mensagem manual..."
+                    className="flex-1 rounded-xl border px-4 py-3 outline-none"
                   />
 
-                  <button className="btn-primary">
-                    Enviar
+                  <button
+                    onClick={handleSendManualMessage}
+                    disabled={loadingAction === "manual-send" || !manualMessage.trim()}
+                    className="rounded-xl bg-black px-5 py-3 text-white"
+                  >
+                    {loadingAction === "manual-send" ? "Enviando..." : "Enviar"}
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="inbox-empty">
+            <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-sm text-gray-400">
               Selecione uma conversa para visualizar o chat.
             </div>
           )}
         </section>
-        <aside className="inbox-details">
+
+        <aside className="border-l bg-white p-4">
           {selectedConversationMock ? (
             <>
-              <div className="inbox-details__header">
-                <div className="inbox-details__title">Cliente</div>
-                <button className="btn-secondary-sm">Editar</button>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm font-semibold text-gray-700">Cliente</div>
+                <button className="rounded-lg border px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                  Editar
+                </button>
               </div>
 
-              <div className="inbox-details__content">
-                <div className="details-card details-card--muted">
-                  <div className="customer-summary">
-                    <div className="customer-summary__avatar">
+              <div className="space-y-4 overflow-y-auto pr-1 lg:h-[calc(100vh-120px)]">
+                <div className="rounded-2xl border bg-gray-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
                       {conversationDetail?.customer?.name}
                     </div>
-
                     <div>
-                      <div className="customer-summary__name">
-                        {conversationDetail?.customer?.name}
-                      </div>
-
-                      <div className="customer-summary__meta">
+                      <div className="text-sm font-semibold">{conversationDetail?.customer?.name}</div>
+                      <div className="text-xs text-gray-500">
                         {conversationDetail?.customer?.customer_since
-                          ? `Cliente desde ${new Date(
-                              conversationDetail.customer.customer_since
-                            ).toLocaleDateString("pt-BR", {
-                              month: "2-digit",
-                              year: "numeric",
-                            })}`
-                          : ""}
+                                      ? `Cliente desde ${new Date(
+                                          conversationDetail.customer.customer_since
+                                        ).toLocaleDateString("pt-BR", {
+                                          month: "2-digit",
+                                          year: "numeric",
+                                        })}`
+                                      : ""}
                       </div>
                     </div>
                   </div>
-
-                  <div className="customer-fields">
+                  <div className="mt-4 space-y-3 text-sm">
                     <div>
-                      <div className="customer-field__label">Telefone</div>
-                      <div className="customer-field__value">
-                        {conversationDetail?.customer?.phone || "-"}
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Telefone
                       </div>
+                      <div className="mt-1 text-gray-700">{conversationDetail?.customer?.phone || "-"}</div>
                     </div>
-
                     <div>
-                      <div className="customer-field__label">Canal</div>
-                      <div className="customer-field__value">
-                        {conversationDetail?.channel?.name || "-"}
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Canal
                       </div>
+                      <div className="mt-1 text-gray-700">{conversationDetail?.channel?.name || "-"}</div>
+                    </div>
+                    <div>
+                      {/* <div className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Último atendimento
+                      </div>
+                      <div className="mt-1 text-gray-700">{conversationDetail?.updated_at
+                        ? `Hoje às ${new Date(conversationDetail.updated_at).toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`
+                        : "-"}</div> */}
                     </div>
                   </div>
                 </div>
 
-                <div className="details-card">
-                  <div className="details-card__title">Status do atendimento</div>
-                  <div className="details-tags">
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 text-sm font-semibold">Status do atendimento</div>
+                  <div className="flex flex-wrap gap-2">
                     {selectedConversationMock.statusTags.map((tag) => (
-                      <span key={tag} className="details-pill details-pill--status">
+                      <span
+                        key={tag}
+                        className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700"
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="details-card">
-                  <div className="details-card__title">Tags</div>
-                  <div className="details-tags">
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 text-sm font-semibold">Tags</div>
+                  <div className="flex flex-wrap gap-2">
                     {selectedConversationMock.tags.map((tag) => (
-                      <span key={tag} className="details-pill details-pill--tag">
+                      <span
+                        key={tag}
+                        className="rounded-full border px-2.5 py-1 text-[11px] font-medium text-gray-700"
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="details-card">
-                  <div className="details-card__title">Resumo do cliente</div>
-                  <p className="details-text">{selectedConversationMock.summary}</p>
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 text-sm font-semibold">Resumo do cliente</div>
+                  <p className="text-sm leading-6 text-gray-600">{selectedConversationMock.summary}</p>
                 </div>
 
-                <div className="details-card">
-                  <div className="details-card__title">Observações internas</div>
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 text-sm font-semibold">Observações internas</div>
                   <textarea
-                    className="details-textarea"
+                    className="min-h-[120px] w-full rounded-xl border px-3 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-black/10"
                     value={selectedConversationMock.notes}
                     readOnly
                   />
                 </div>
 
-                <div className="details-card">
-                  <div className="details-card__title">Ações rápidas</div>
-                  <div className="details-actions">
-                    <button className="btn-ghost-block">Marcar como VIP</button>
-                    <button className="btn-ghost-block">Adicionar tag</button>
-                    <button className="btn-ghost-block">Ver histórico completo</button>
+                <div className="rounded-2xl border p-4">
+                  <div className="mb-3 text-sm font-semibold">Ações rápidas</div>
+                  <div className="grid gap-2">
+                    <button className="rounded-xl border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      Marcar como VIP
+                    </button>
+                    <button className="rounded-xl border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      Adicionar tag
+                    </button>
+                    <button className="rounded-xl border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      Ver histórico completo
+                    </button>
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            <div className="inbox-details__empty">
+            <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-sm text-gray-400">
               Nenhum cliente selecionado.
             </div>
           )}
         </aside>
-        
       </main>
     </div>
   );
