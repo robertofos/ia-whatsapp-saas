@@ -16,140 +16,6 @@ const FILTERS = {
   PENDING_AI: "pending_ai",
 };
 // TODO remover essa parte do código e usar apenas a obtenção da conversa selecionada a partir da lista de conversas carregadas do backend quando a integração estiver completa.
-const conversationsMock = [
-  {
-    id: 1,
-    name: "João Silva",
-    phone: "+55 21 99999-1111",
-    channel: "WhatsApp",
-    time: "14:32",
-    unread: 2,
-    pendingAI: true,
-    customerSince: "mar/2026",
-    lastService: "Hoje às 14:33",
-    statusTags: ["Aguardando IA", "Em atendimento", "Cliente recorrente"],
-    tags: ["Entrega Barra", "Interesse pizza grande", "Lead quente"],
-    summary:
-      "Cliente perguntando sobre preço da pizza grande e disponibilidade de entrega na Barra. Histórico indica forte intenção de compra e boa chance de conversão nesta conversa.",
-    notes:
-      "Cliente costuma responder rápido. Priorizar envio de sabores, tamanhos e taxa de entrega para a Barra.",
-    aiSuggestion:
-      "Sim! Entregamos na Barra, dependendo da localização exata. Sobre a pizza grande, posso te enviar agora os sabores disponíveis e os valores de cada opção.",
-    messages: [
-      {
-        id: 1,
-        side: "left",
-        text: "Boa tarde! Gostaria de saber o preço da pizza grande.",
-        time: "14:31",
-      },
-      {
-        id: 2,
-        side: "right",
-        text: "Boa tarde, João! Temos opções a partir de R$ 52. Posso te enviar os sabores disponíveis.",
-        time: "14:32 • Enviada",
-      },
-      {
-        id: 3,
-        side: "left",
-        text: "Sim, por favor. E vocês entregam na Barra?",
-        time: "14:33",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Maria Oliveira",
-    phone: "+55 21 98888-2222",
-    channel: "WhatsApp",
-    time: "13:18",
-    unread: 0,
-    pendingAI: false,
-    customerSince: "jan/2026",
-    lastService: "Hoje às 13:18",
-    statusTags: ["Em atendimento"],
-    tags: ["Entrega Copacabana", "Cliente nova"],
-    summary:
-      "Cliente quer saber se a loja entrega em Copacabana e está avaliando fazer o primeiro pedido.",
-    notes:
-      "Enviar taxa de entrega e prazo médio antes de oferecer cardápio completo.",
-    aiSuggestion:
-      "Sim, entregamos em Copacabana em áreas selecionadas. Posso confirmar sua rua e já te passar taxa e prazo estimado.",
-    messages: [
-      {
-        id: 1,
-        side: "left",
-        text: "Vocês entregam em Copacabana?",
-        time: "13:16",
-      },
-      {
-        id: 2,
-        side: "right",
-        text: "Entregamos sim em áreas selecionadas. Posso confirmar sua rua para te informar a taxa?",
-        time: "13:17 • Enviada",
-      },
-      {
-        id: 3,
-        side: "left",
-        text: "Claro, é na Rua Barata Ribeiro.",
-        time: "13:18",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Pedro Santos",
-    phone: "+55 21 97777-3333",
-    channel: "WhatsApp",
-    time: "12:05",
-    unread: 1,
-    pendingAI: true,
-    customerSince: "fev/2026",
-    lastService: "Hoje às 12:05",
-    statusTags: ["Aguardando IA", "Lead quente"],
-    tags: ["Pedido hoje", "Família"],
-    summary:
-      "Cliente quer fazer um pedido para hoje à noite e demonstra intenção de fechar rapidamente.",
-    notes:
-      "Oferecer combo família e informar tempo estimado de preparo.",
-    aiSuggestion:
-      "Perfeito! Posso te sugerir um combo para hoje à noite com pizzas grandes e bebidas. Quer que eu te envie as opções agora?",
-    messages: [
-      {
-        id: 1,
-        side: "left",
-        text: "Quero fazer um pedido para hoje à noite.",
-        time: "12:05",
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: "Ana Costa",
-    phone: "+55 21 96666-4444",
-    channel: "WhatsApp",
-    time: "Ontem",
-    unread: 0,
-    pendingAI: false,
-    customerSince: "dez/2025",
-    lastService: "Ontem às 20:41",
-    statusTags: ["Resolvido"],
-    tags: ["Sem glúten"],
-    summary:
-      "Cliente perguntou sobre opções sem glúten. Conversa já foi concluída.",
-    notes:
-      "Caso retorne, encaminhar direto para cardápio especial.",
-    aiSuggestion:
-      "Temos algumas opções que podem te atender. Posso te enviar os sabores disponíveis e os cuidados de preparo.",
-    messages: [
-      {
-        id: 1,
-        side: "left",
-        text: "Tem opção sem glúten?",
-        time: "Ontem",
-      },
-    ],
-  },
-];
 
 
 export default function Inbox() {
@@ -284,6 +150,7 @@ useEffect(() => {
   loadConversations();
 }, []);
 // carregamento das mensagens sempre que a conversa selecionada for alterada
+
 useEffect(() => {
   const loadMessages = async () => {
     if (!selectedConversationId) {
@@ -341,10 +208,6 @@ useEffect(() => {
   usada para desenvolvimento e testes antes da implementação completa do backend,
   garantindo que o painel de mensagens e detalhes possa ser desenvolvido e testado com dados consistentes mesmo sem a integração total com o backend.
  TODO remover essa parte do código e usar apenas a obtenção da conversa selecionada a partir da lista de conversas carregadas do backend quando a integração estiver completa.*/
-const selectedConversationMock =
-  conversationsMock.find((item) => item.id === selectedConversationId) ||
-  conversationsMock[0] ||
-  null;
 
   // função para filtrar a lista de conversas com base no termo de busca e no filtro ativo (todas, não lidas, pendentes de IA),
   const filteredConversations = useMemo(() => {
@@ -831,11 +694,10 @@ function handleLogout() {
           )}
         </section>
         <aside className="inbox-details">
-          {selectedConversationMock ? (
+          {selectedConversation ? (
             <>
               <div className="inbox-details__header">
                 <div className="inbox-details__title">Cliente</div>
-                <button className="btn-secondary-sm">Editar</button>
               </div>
 
               <div className="inbox-details__content">
@@ -881,39 +743,8 @@ function handleLogout() {
                 </div>
 
                 <div className="details-card">
-                  <div className="details-card__title">Status do atendimento</div>
-                  <div className="details-tags">
-                    {selectedConversationMock.statusTags.map((tag) => (
-                      <span key={tag} className="details-pill details-pill--status">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="details-card">
-                  <div className="details-card__title">Tags</div>
-                  <div className="details-tags">
-                    {selectedConversationMock.tags.map((tag) => (
-                      <span key={tag} className="details-pill details-pill--tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="details-card">
                   <div className="details-card__title">Resumo do cliente</div>
-                  <p className="details-text">{selectedConversationMock.summary}</p>
-                </div>
-
-                <div className="details-card">
-                  <div className="details-card__title">Observações internas</div>
-                  <textarea
-                    className="details-textarea"
-                    value={selectedConversationMock.notes}
-                    readOnly
-                  />
+                  <p className="details-text">Cliente....</p>
                 </div>
 
                 <div className="details-card">
