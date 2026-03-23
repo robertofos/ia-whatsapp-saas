@@ -70,7 +70,7 @@ class LoginView(APIView):
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
-
+    print(permission_classes)
     def get(self, request):
         tenant_link = (
             TenantUser.objects

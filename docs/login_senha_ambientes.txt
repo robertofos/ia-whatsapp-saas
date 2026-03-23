@@ -1,4 +1,6 @@
 superusuario Django Local
+master
+canada@001
 
 roberto
 Rf@090778

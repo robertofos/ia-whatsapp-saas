@@ -4,6 +4,11 @@ import { useNavigate } from "react-router-dom";
 import {  approveMessage,  rejectMessage,  editAndApproveMessage,  sendManualMessage,} from "../services/messageService";
 import api from "../services/api";
 import "../styles/inbox.css";
+import { getConversations,
+        getConversationDetail,
+        getConversationMessages
+
+ } from "../services/messageService";
 
 const FILTERS = {
   ALL: "all",
@@ -209,8 +214,8 @@ const loadConversationMessages = async (
   try {
     if (!silent) setLoadingMessages(true);
 
-    const response = await api.get(`/conversations/${conversationIdParam}/messages/`);
-    setMessages(response.data || []);
+    const data = await getConversationMessages(conversationIdParam);
+    setMessages(data || []);
   } catch (error) {
     console.error("Erro ao carregar mensagens:", error);
   } finally {
@@ -256,20 +261,11 @@ const loadConversations = async ({ silent = false } = {}) => {
   try {
     if (!silent) setLoadingConversations(true);
 
-    const response = await fetch(
-      "http://127.0.0.1:8000/api/conversations/?limit=20&offset=0",
-      {
-        headers: {
-          "X-Tenant-Id": "1",
-        },
-      }
-    );
+    const data = await getConversations({
+      limit: 20,
+      offset: 0,
+    });
 
-    if (!response.ok) {
-      throw new Error("Erro ao carregar conversas");
-    }
-
-    const data = await response.json();
     const results = data.results || [];
 
     setConversations(results);
@@ -298,20 +294,7 @@ useEffect(() => {
     try {
       setLoadingMessages(true);
 
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/conversations/${selectedConversationId}/messages/`,
-        {
-          headers: {
-            "X-Tenant-Id": "1",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao carregar mensagens");
-      }
-
-      const data = await response.json();
+      const data = await getConversationMessages(selectedConversationId);
       setMessages(data || []);
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
@@ -338,20 +321,8 @@ useEffect(() => {
     try {
       setLoadingConversationDetail(true);
 
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/conversations/${selectedConversationId}/detail/`,
-        {
-          headers: {
-            "X-Tenant-Id": "1",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao carregar detalhe da conversa");
-      }
-
-      const data = await response.json();
+      
+      const data = await getConversationDetail(selectedConversationId);
       setConversationDetail(data);
     } catch (error) {
       console.error("Erro ao carregar detalhe da conversa:", error);

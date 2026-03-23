@@ -1,21 +1,30 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
-from .models import Message,Conversation
+from .models import Message, Conversation
 from .serializers import MessageSerializer
 from .services import process_inbound_whatsapp_message
 from apps.messaging.whatsapp_service import WhatsAppService
+from apps.core.utils import get_request_tenant
 
 from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Q
 
-
 class MessageViewSet(ModelViewSet):
     queryset = Message.objects.all().order_by("id")
     serializer_class = MessageSerializer
+
+def require_request_tenant(request):
+    tenant = get_request_tenant(request)
+
+    if not tenant:
+        raise PermissionDenied("Usuário sem vínculo ativo com tenant.")
+
+    return tenant
 
 @api_view(["POST"])
 def whatsapp_webhook_mock(request):
@@ -38,14 +47,12 @@ def whatsapp_webhook_mock(request):
     return Response(result, status=status.HTTP_201_CREATED)
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def pending_messages_view(request):
-    tenant_id = request.GET.get("tenant_id")
-
-    if not tenant_id:
-        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+    tenant = require_request_tenant(request)
 
     messages = Message.objects.filter(
-        conversation__tenant_id=tenant_id,
+        conversation__tenant=tenant,
         sender_type=Message.SenderType.AI,
         direction=Message.Direction.OUTBOUND,
         review_status=Message.ReviewStatus.PENDING,
@@ -117,7 +124,10 @@ def reject_message_logic(message):
     return True, "Mensagem rejeitada com sucesso"
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def approve_message_view(request, message_id):
+    tenant = require_request_tenant(request)
+
     try:
         message = Message.objects.select_related(
             "conversation",
@@ -127,7 +137,10 @@ def approve_message_view(request, message_id):
             "conversation__tenant_channel_account__channel",
             "conversation__customer",
             "channel",
-        ).get(id=message_id)
+        ).get(
+            id=message_id,
+            conversation__tenant=tenant,
+        )
     except Message.DoesNotExist:
         return Response({"detail": "Mensagem não encontrada"}, status=404)
 
@@ -261,14 +274,12 @@ def edit_and_approve_message_view(request, message_id):
     )
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def edited_messages_view(request):
-    tenant_id = request.GET.get("tenant_id")
-
-    if not tenant_id:
-        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+    tenant = require_request_tenant(request)
 
     messages = Message.objects.filter(
-        conversation__tenant_id=tenant_id,
+        conversation__tenant=tenant,
         sender_type=Message.SenderType.AI,
         direction=Message.Direction.OUTBOUND,
         review_status=Message.ReviewStatus.EDITED,
@@ -288,14 +299,12 @@ def edited_messages_view(request):
     return Response(data)
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def rejected_messages_view(request):
-    tenant_id = request.GET.get("tenant_id")
-
-    if not tenant_id:
-        return Response({"detail": "tenant_id é obrigatório"}, status=400)
+    tenant = require_request_tenant(request)
 
     messages = Message.objects.filter(
-        conversation__tenant_id=tenant_id,
+        conversation__tenant=tenant,
         sender_type=Message.SenderType.AI,
         direction=Message.Direction.OUTBOUND,
         review_status=Message.ReviewStatus.REJECTED,
@@ -315,8 +324,10 @@ def rejected_messages_view(request):
     return Response(data)
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def reviewed_messages_view(request):
-    tenant_id = request.GET.get("tenant_id")
+    tenant = require_request_tenant(request)
+
     status_filter = request.GET.get("status")
     channel_filter = request.GET.get("channel")
     conversation_id = request.GET.get("conversation_id")
@@ -324,9 +335,6 @@ def reviewed_messages_view(request):
 
     page = request.GET.get("page", 1)
     page_size = request.GET.get("page_size", 10)
-
-    if not tenant_id:
-        return Response({"detail": "tenant_id é obrigatório"}, status=400)
 
     valid_statuses = {
         "pending": Message.ReviewStatus.PENDING,
@@ -361,7 +369,7 @@ def reviewed_messages_view(request):
         )
 
     messages = Message.objects.filter(
-        conversation__tenant_id=tenant_id,
+        conversation__tenant=tenant,
         sender_type=Message.SenderType.AI,
         direction=Message.Direction.OUTBOUND,
     ).select_related("channel", "conversation")
@@ -371,9 +379,7 @@ def reviewed_messages_view(request):
 
         if status_filter not in valid_statuses:
             return Response(
-                {
-                    "detail": "status inválido. Use: pending, approved, edited, rejected"
-                },
+                {"detail": "status inválido. Use: pending, approved, edited, rejected"},
                 status=400,
             )
 
@@ -384,9 +390,7 @@ def reviewed_messages_view(request):
 
         if channel_filter not in valid_channels:
             return Response(
-                {
-                    "detail": "channel inválido. Use: whatsapp, instagram, facebook, google"
-                },
+                {"detail": "channel inválido. Use: whatsapp, instagram, facebook, google"},
                 status=400,
             )
 
@@ -404,9 +408,7 @@ def reviewed_messages_view(request):
         messages = messages.filter(conversation_id=conversation_id)
 
     if search:
-        messages = messages.filter(
-            Q(content__icontains=search)
-        )
+        messages = messages.filter(Q(content__icontains=search))
 
     messages = messages.order_by("-created_at", "-id")
 
@@ -418,6 +420,12 @@ def reviewed_messages_view(request):
         return Response(
             {
                 "items": [],
+                "filters": {
+                    "status": status_filter,
+                    "channel": channel_filter,
+                    "conversation_id": conversation_id,
+                    "search": search,
+                },
                 "pagination": {
                     "page": page,
                     "page_size": page_size,
@@ -446,7 +454,6 @@ def reviewed_messages_view(request):
         {
             "items": data,
             "filters": {
-                "tenant_id": tenant_id,
                 "status": status_filter,
                 "channel": channel_filter,
                 "conversation_id": conversation_id,
@@ -464,18 +471,21 @@ def reviewed_messages_view(request):
     )
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def conversation_messages_view(request, conversation_id):
-    tenant_id = request.headers.get("X-Tenant-Id")
+    tenant = require_request_tenant(request)
 
-    if not tenant_id:
-        raise ValidationError({"detail": "X-Tenant-Id header is required."})
+    conversation = Conversation.objects.filter(
+        id=conversation_id,
+        tenant=tenant,
+    ).first()
+
+    if not conversation:
+        raise ValidationError({"detail": "Conversation not found."})
 
     messages = (
         Message.objects
-        .filter(
-            conversation_id=conversation_id,
-            conversation__tenant_id=tenant_id
-        )
+        .filter(conversation=conversation)
         .order_by("created_at")
     )
 
@@ -483,7 +493,10 @@ def conversation_messages_view(request, conversation_id):
     return Response(serializer.data)
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def send_manual_message_view(request, conversation_id):
+    tenant = require_request_tenant(request)
+
     content = request.data.get("content", "").strip()
 
     if not content:
@@ -498,7 +511,7 @@ def send_manual_message_view(request, conversation_id):
             "channel",
             "tenant_channel_account",
             "customer",
-        ).get(id=conversation_id)
+        ).get(id=conversation_id, tenant=tenant)
     except Conversation.DoesNotExist:
         return Response(
             {"detail": "Conversa não encontrada"},

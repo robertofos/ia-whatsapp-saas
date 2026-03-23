@@ -24,3 +24,23 @@ export async function sendManualMessage(conversationId: number, content: string)
   );
   return response.data;
 }
+
+export async function getConversations(params?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const response = await api.get("/conversations/", {
+    params,
+  });
+  return response.data;
+}
+
+export async function getConversationDetail(conversationId: number | string) {
+  const response = await api.get(`/conversations/${conversationId}/detail/`);
+  return response.data;
+}
+
+export async function getConversationMessages(conversationId: number | string) {
+  const response = await api.get(`/conversations/${conversationId}/messages/`);
+  return response.data;
+}

@@ -24,13 +24,16 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(username, password) {
+    setLoadingAuth(true);
+
     const data = await loginRequest({ username, password });
 
     localStorage.setItem("access_token", data.access);
     localStorage.setItem("refresh_token", data.refresh);
 
-    setAuthUser(data.user);
-    setTenant(data.tenant);
+    console.log("TOKEN SALVO:", localStorage.getItem("access_token"));
+
+    await loadMe();
   }
 
   function signOut() {
