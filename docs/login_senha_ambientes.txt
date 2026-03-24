@@ -22,7 +22,7 @@ https://cloud.digitalocean.com/login
 login pelo github que entra
 
 Senha para entrar no servidor de produção
-sh root@138.197.139.199
+ssh root@138.197.139.199
 passaword: cAnada@00a
 
 IP de produção:
@@ -37,3 +37,38 @@ Ambiente de PRD superUsurio djangorestframework
 usuário (leave blank to use 'root'): root
 Endereço de email: robertofos@gmail.com
 Password: Canada@001
+
+
+----------------
+passo a passo atualizar ambiente de PRD
+
+1 - entrar no gitbash(maquina local)
+2 -conectar com o servidor linux
+ssh root@138.197.139.199
+passaword: cAnada@00a
+3- entrar na pasta do projeto
+cd ia-whatsapp-saas
+4 - Verificar branch atual
+git branch  e  git status
+5- pegar a versão nova do sistema do github
+git fetch origin
+git checkout develop
+git pull origin develop
+6- fazer o backup do arquivo .env.prod
+ls -la
+cp .env.prod .env.prod.bkp.$(date +%F-%H%M%S)
+
+---------------------------------
+
+Backup do banco de dados
+1 - docker ps e docker-compose ps ( ver container e ver container rodando)
+CONTAINER ID   IMAGE                  COMMAND                  CREATED      STATUS      PORTS                                 NAMES
+b06850643cbb   nginx:alpine           "/docker-entrypoint.…"   3 days ago   Up 3 days   0.0.0.0:80->80/tcp, [::]:80->80/tcp   ia_whatsapp_nginx
+c7ab8351f864   ia-whatsapp-saas_web   "gunicorn config.wsg…"   3 days ago   Up 3 days   8000/tcp                              ia_whatsapp_web
+9c431731098a   postgres:15            "docker-entrypoint.s…"   3 days ago   Up 3 days   5432/tcp                              ia_whatsapp_db
+
+2 - docker exec -t ia_whatsapp_db pg_dumpall -U postgres > backup_$(date +%F-%H%M%S).sql
+
+3 - Rebuild do backend
+docker-compose build web
+docker-compose up -d web
