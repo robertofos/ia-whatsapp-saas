@@ -481,7 +481,6 @@ function handleLogout() {
 
           <div
             className="inbox-conversation-list"
-            style={{ height: "calc(100vh - 220px)" }}
           >
             {loadingConversations ? (
               <div className="inbox-empty">Carregando conversas...</div>
