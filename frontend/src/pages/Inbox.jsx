@@ -661,11 +661,22 @@ function handleLogout() {
                     />
 
                     <div className="mt-3 flex gap-2">
-                      <button className="btn-primary">
-                        Aprovar e enviar
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={handleApproveOrEditAi}
+                        disabled={loadingAction === "approve"}
+                      >
+                        {loadingAction === "approve" ? "Enviando..." : "Aprovar e enviar"}
                       </button>
-                      <button className="btn-danger">
-                        Rejeitar
+
+                      <button
+                        type="button"
+                        className="btn-danger"
+                        onClick={handleRejectAi}
+                        disabled={loadingAction === "reject"}
+                      >
+                        {loadingAction === "reject" ? "Rejeitando..." : "Rejeitar"}
                       </button>
                     </div>
                   </div>
@@ -680,8 +691,13 @@ function handleLogout() {
                     className="inbox-input"
                   />
 
-                  <button className="btn-primary">
-                    Enviar
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleSendManualMessage}
+                    disabled={loadingAction === "manual-send" || !manualMessage.trim()}
+                  >
+                    {loadingAction === "manual-send" ? "Enviando..." : "Enviar"}
                   </button>
                 </div>
               </div>
