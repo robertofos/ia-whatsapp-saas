@@ -83,10 +83,10 @@ def process_inbound_whatsapp_message(
         })
     # carregando o contexto de conhecimento para a IA
     store = Store.objects.filter(tenant=tenant_account.tenant).first()
-    # products = Product.objects.filter(tenant=tenant_account.tenant, disponivel=True)[:10]
-    # faqs = FAQItem.objects.filter(tenant=tenant_account.tenant)[:10]
-    products = get_relevant_products(tenant_account.tenant, content, limit=5)
-    faqs = get_relevant_faqs(tenant_account.tenant, content, limit=5)
+    products = Product.objects.filter(tenant=tenant_account.tenant, disponivel=True)[:10]
+    faqs = FAQItem.objects.filter(tenant=tenant_account.tenant)[:10]
+    # products = get_relevant_products(tenant_account.tenant, content, limit=5)
+    # faqs = get_relevant_faqs(tenant_account.tenant, content, limit=5)
 
     store_context = ""
     if store:
